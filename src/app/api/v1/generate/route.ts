@@ -1,9 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +23,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const OpenAI = (await import('openai')).default;
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
     const response = await openai.images.generate({
       model: model || 'dall-e-3',
       prompt: prompt,
@@ -37,8 +35,8 @@ export async function POST(request: NextRequest) {
       response_format: 'url',
     });
 
-    const imageUrl = response.data[0]?.url;
-    const revisedPrompt = response.data[0]?.revised_prompt;
+    const imageUrl = response.data?.[0]?.url;
+    const revisedPrompt = response.data?.[0]?.revised_prompt;
 
     if (!imageUrl) {
       return NextResponse.json(
