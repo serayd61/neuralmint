@@ -1,0 +1,22 @@
+[network]
+name = "simnet"
+deployment_fee_rate = 10
+
+[accounts.deployer]
+mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+
+[contracts.sip009-nft-trait]
+path = "contracts/sip009-nft-trait.clar"
+deployer = "deployer"
+
+[contracts.neuralmint-nft]
+path = "contracts/neuralmint-nft.clar"
+deployer = "deployer"
+
+[contracts.neuralmint-marketplace]
+path = "contracts/neuralmint-marketplace.clar"
+deployer = "deployer"
+
+[contracts.neuralmint-lazy-mint]
+path = "contracts/neuralmint-lazy-mint.clar"
+deployer = "deployer"

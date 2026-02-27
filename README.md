@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NeuralMint
 
-## Getting Started
+NeuralMint, Stacks üzerinde çalışan AI destekli NFT marketplace uygulamasıdır.
 
-First, run the development server:
+## Tech Stack
+
+- Next.js (App Router) + TypeScript
+- Tailwind CSS v4 + Framer Motion
+- Zustand + TanStack Query
+- Stacks Connect / Stacks transactions
+- Vercel deploy hedefi
+- Clarity contract workspace (`clarity/`)
+
+## Local Development
 
 ```bash
+npm install
+cp .env.example .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Uygulama: `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Production Readiness Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run check
+```
 
-## Learn More
+Bu komut:
 
-To learn more about Next.js, take a look at the following resources:
+- typecheck
+- lint
+- production build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+adımlarını birlikte çalıştırır.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API Endpoints
 
-## Deploy on Vercel
+- `GET /api/health` : canlılık kontrolü
+- `GET /api/v1/stats` : platform istatistikleri (şimdilik mock-data tabanlı)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Vercel Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Repository'yi GitHub'a push et.
+2. Vercel'de **New Project** ile bu repo'yu bağla.
+3. Build ayarları:
+   - Framework: `Next.js`
+   - Build command: `npm run build`
+   - Install command: `npm install`
+4. Vercel Environment Variables ekranına `.env.example` içindeki değişkenleri gir.
+5. Deploy et.
+
+Deploy sonrası hızlı kontrol:
+
+- `https://<your-domain>/api/health`
+- `https://<your-domain>/api/v1/stats`
+
+## Clarity Contracts (Deploy Prep)
+
+Contract workspace: `clarity/`
+
+### Dosyalar
+
+- `clarity/contracts/sip009-nft-trait.clar`
+- `clarity/contracts/neuralmint-nft.clar`
+- `clarity/contracts/neuralmint-marketplace.clar`
+- `clarity/contracts/neuralmint-lazy-mint.clar`
+- `clarity/settings/Testnet.toml`
+- `clarity/settings/Mainnet.toml`
+
+### Kurulum
+
+Önce Clarinet kur:
+
+- Docs: https://github.com/hirosystems/clarinet
+
+### Testnet Deploy
+
+```bash
+cd clarity
+clarinet check
+clarinet deployments apply --network testnet --deployment-plan settings/Testnet.toml
+```
+
+### Mainnet Deploy
+
+```bash
+cd clarity
+clarinet check
+clarinet deployments apply --network mainnet --deployment-plan settings/Mainnet.toml
+```
+
+### Private Key ile Otomatik Deploy (Önerilen)
+
+Mnemonic yerine private key kullanmak için:
+
+1. `.env.local` içine sadece lokal makinede ekle:
+
+```bash
+STACKS_DEPLOYER_KEY=your_private_key_here
+```
+
+2. Testnet deploy:
+
+```bash
+npm run deploy:contracts:testnet
+```
+
+3. Mainnet deploy:
+
+```bash
+npm run deploy:contracts:mainnet
+```
+
+Script, kontratları sırayla yayınlar ve her tx onayını bekler.
+
+## Dikkat Edilecekler
+
+- `STACKS_DEPLOYER_KEY` ve mnemonic değerlerini repo'ya commit etme.
+- `.env*` dosyaları `.gitignore` ile korunuyor.
+- Mainnet deploy öncesi contract audit önerilir.

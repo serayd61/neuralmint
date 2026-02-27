@@ -3,15 +3,31 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "node ./node_modules/next/dist/bin/next dev",
+    "build": "node ./node_modules/next/dist/bin/next build --webpack",
+    "start": "node ./node_modules/next/dist/bin/next start",
+    "lint": "node ./node_modules/eslint/bin/eslint.js .",
+    "typecheck": "node ./node_modules/typescript/lib/tsc.js --noEmit",
+    "check": "npm run typecheck && npm run lint && npm run build",
+    "deploy:contracts:testnet": "STACKS_DEPLOY_NETWORK=testnet node ./scripts/deploy-contracts.mjs",
+    "deploy:contracts:mainnet": "STACKS_DEPLOY_NETWORK=mainnet node ./scripts/deploy-contracts.mjs"
   },
   "dependencies": {
+    "@stacks/blockchain-api-client": "^8.14.1",
+    "@stacks/connect": "^8.2.5",
+    "@stacks/network": "^7.3.1",
+    "@stacks/transactions": "^7.3.1",
+    "@tanstack/react-query": "^5.90.21",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.34.3",
+    "lucide-react": "^0.575.0",
     "next": "16.1.6",
+    "next-intl": "^4.8.3",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^3.5.0",
+    "zustand": "^5.0.11"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -1,0 +1,38 @@
+id: 0
+name: Testnet deployment
+network: testnet
+stacks-node: https://api.testnet.hiro.so
+bitcoin-node: http://blockstack:blockstacksystem@bitcoind.testnet.stacks.co:18332
+plan:
+  batches:
+  - id: 0
+    transactions:
+    - transaction-type: contract-publish
+      contract-name: sip009-nft-trait
+      expected-sender: STC5KHM41H6WHAST7MWWDD807YSPRQKJ68T330BQ
+      cost: 3030
+      path: ontracts/sip009-nft-trait.clar
+      anchor-block-only: true
+      clarity-version: 2
+    - transaction-type: contract-publish
+      contract-name: neuralmint-marketplace
+      expected-sender: STC5KHM41H6WHAST7MWWDD807YSPRQKJ68T330BQ
+      cost: 38240
+      path: ontracts/neuralmint-marketplace.clar
+      anchor-block-only: true
+      clarity-version: 2
+    - transaction-type: contract-publish
+      contract-name: neuralmint-nft
+      expected-sender: STC5KHM41H6WHAST7MWWDD807YSPRQKJ68T330BQ
+      cost: 26450
+      path: ontracts/neuralmint-nft.clar
+      anchor-block-only: true
+      clarity-version: 2
+    - transaction-type: contract-publish
+      contract-name: neuralmint-lazy-mint
+      expected-sender: STC5KHM41H6WHAST7MWWDD807YSPRQKJ68T330BQ
+      cost: 12660
+      path: ontracts/neuralmint-lazy-mint.clar
+      anchor-block-only: true
+      clarity-version: 2
+    epoch: '2.5'
