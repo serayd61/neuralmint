@@ -27,11 +27,16 @@ export function ConnectWalletButton() {
     }, []);
 
     const handleConnect = () => {
+        const iconUrl = typeof window !== 'undefined' 
+            ? `${window.location.origin}/logo.svg` 
+            : '/logo.svg';
+            
         showConnect({
             appDetails: {
                 name: APP_NAME,
-                icon: "/logo.svg",
+                icon: iconUrl,
             },
+            redirectTo: '/',
             onFinish: () => {
                 const userData = userSession.loadUserData();
                 const address =
@@ -41,6 +46,9 @@ export function ConnectWalletButton() {
                 if (address) {
                     setWalletConnected(address);
                 }
+            },
+            onCancel: () => {
+                console.log('Wallet connection cancelled');
             },
             userSession,
         });

@@ -44,7 +44,7 @@ export default function Home() {
             >
               <span className="gradient-text block">Create. Mint. Trade.</span>
               <span className="mt-2 block text-text-secondary">
-                AI destekli NFT&apos;ler, Bitcoin ile güvence altında.
+                AI-powered NFTs, secured by Bitcoin.
               </span>
             </motion.h1>
 
@@ -54,9 +54,8 @@ export default function Home() {
               transition={{ duration: 0.45, delay: 0.1 }}
               className="max-w-xl text-sm text-text-secondary"
             >
-              DALL·E 3 ve Stable Diffusion ile tek satır kod yazmadan NFT oluştur,
-              Stacks üzerinde mint et ve yalnızca %1 platform ücretiyle STX karşılığında
-              alım-satım yap.
+              Create NFTs with DALL·E 3 and Stable Diffusion without writing a single line of code.
+              Mint on Stacks and trade with only 1% platform fee.
             </motion.p>
 
             <motion.div
@@ -66,14 +65,14 @@ export default function Home() {
               className="flex flex-wrap items-center gap-4"
             >
               <Link href="/create" className="btn-primary inline-flex items-center gap-2">
-                AI Studio&apos;ya Başla
+                Start AI Studio
                 <ArrowRight size={16} />
               </Link>
               <Link
                 href="/explore"
                 className="btn-secondary inline-flex items-center gap-2 text-xs"
               >
-                Pazarı Keşfet
+                Explore Market
               </Link>
             </motion.div>
 
@@ -84,17 +83,17 @@ export default function Home() {
               transition={{ duration: 0.45, delay: 0.2 }}
               className="grid gap-3 text-xs text-text-secondary sm:grid-cols-4"
             >
-              <StatPill label="Mint edilen NFT" value={formatNumber(platformStats.totalNftsMinted)} />
+              <StatPill label="NFTs Minted" value={formatNumber(platformStats.totalNftsMinted)} />
               <StatPill
-                label="Toplam hacim"
+                label="Total Volume"
                 value={formatStx(platformStats.totalVolumeStx * 1_000_000, 0)}
               />
               <StatPill
-                label="Aktif yaratıcı"
+                label="Active Creators"
                 value={formatNumber(platformStats.activeCreators)}
               />
               <StatPill
-                label="Platform taban fiyatı"
+                label="Floor Price"
                 value={`${platformStats.floorPriceStx.toFixed(2)} STX`}
               />
             </motion.div>
@@ -111,7 +110,7 @@ export default function Home() {
               <div className="mb-3 flex items-center justify-between text-[11px] text-text-secondary">
                 <span className="inline-flex items-center gap-1">
                   <Sparkles size={14} className="text-neon-pink" />
-                  Öne Çıkan AI NFT
+                  Featured AI NFT
                 </span>
                 <span className="rounded-full bg-black/40 px-2 py-0.5 font-mono text-[10px] text-neon-cyan">
                   DALL·E 3 • STX
@@ -136,7 +135,7 @@ export default function Home() {
                       </p>
                     </div>
                     <div className="rounded-lg bg-black/60 px-3 py-2 text-right">
-                      <p className="text-[10px] text-text-muted">Şu anki fiyat</p>
+                      <p className="text-[10px] text-text-muted">Current Price</p>
                       <p className="font-mono text-sm text-neon-orange">
                         {trending[0].priceStx.toFixed(2)} STX
                       </p>
@@ -152,17 +151,17 @@ export default function Home() {
         <section className="space-y-5">
           <div className="flex items-center justify-between gap-4">
             <h2 className="font-heading text-lg font-semibold text-text-primary">
-              Trend NFT&apos;ler
+              Trending NFTs
             </h2>
             <div className="flex items-center gap-2 text-[11px] text-text-muted">
               <button className="rounded-full bg-bg-card px-3 py-1 text-xs text-text-secondary">
-                24s
+                24h
               </button>
               <button className="rounded-full px-3 py-1 text-xs text-text-muted hover:bg-bg-card">
-                7g
+                7d
               </button>
               <button className="rounded-full px-3 py-1 text-xs text-text-muted hover:bg-bg-card">
-                Tümü
+                All
               </button>
             </div>
           </div>
@@ -182,7 +181,7 @@ export default function Home() {
                   </div>
                   {nft.isAuction && nft.blocksRemaining && (
                     <div className="absolute right-2 top-2 rounded-full bg-bg-card/90 px-2 py-0.5 text-[10px] font-mono text-text-secondary">
-                      ~{nft.blocksRemaining} blok
+                      ~{nft.blocksRemaining} blocks
                     </div>
                   )}
                 </div>
@@ -193,13 +192,13 @@ export default function Home() {
                   </p>
                   <div className="flex items-center justify-between text-xs">
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-text-muted">Fiyat</span>
+                      <span className="text-[10px] text-text-muted">Price</span>
                       <span className="font-mono text-neon-orange">
                         {nft.priceStx.toFixed(2)} STX
                       </span>
                     </div>
                     <div className="flex flex-col items-end">
-                      <span className="text-[10px] text-text-muted">Nadirlik</span>
+                      <span className="text-[10px] text-text-muted">Rarity</span>
                       <span className="text-xs text-neon-purple">{nft.rarity}/100</span>
                     </div>
                   </div>
@@ -214,13 +213,13 @@ export default function Home() {
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-4">
               <h2 className="font-heading text-lg font-semibold text-text-primary">
-                Öne Çıkan Koleksiyonlar
+                Top Collections
               </h2>
               <Link
                 href="/collections"
                 className="text-xs text-neon-cyan hover:underline"
               >
-                Tüm koleksiyonları gör
+                View all collections
               </Link>
             </div>
             <div className="space-y-3">
@@ -238,11 +237,11 @@ export default function Home() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-text-primary">{col.name}</p>
                     <p className="text-[11px] text-text-muted">
-                      Taban:{" "}
+                      Floor:{" "}
                       <span className="font-mono text-neon-orange">
                         {col.floorPriceStx.toFixed(2)} STX
                       </span>{" "}
-                      • Hacim:{" "}
+                      • Volume:{" "}
                       <span className="font-mono">
                         {formatStx(col.volumeStx * 1_000_000, 0)}
                       </span>
@@ -267,28 +266,28 @@ export default function Home() {
 
           <div className="space-y-4">
             <h2 className="font-heading text-lg font-semibold text-text-primary">
-              Bitcoin ile Güvence Altında
+              Secured by Bitcoin
             </h2>
             <div className="neon-card relative overflow-hidden p-4">
               <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-neon-orange/20 blur-3xl" />
               <div className="relative flex flex-col gap-4">
                 <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-[11px] text-text-secondary">
                   <Bitcoin size={14} className="text-neon-orange" />
-                  Stacks → Bitcoin PoX bağlantısı
+                  Stacks → Bitcoin PoX Connection
                 </div>
                 <p className="text-xs text-text-secondary">
-                  Her NFT mint ve trade işlemi, Stacks üzerinden Bitcoin&apos;in Proof of
-                  Work güvenliğine anchor edilir. Clarity sözleşmeleri, post-condition
-                  desteğiyle fonlarının tam olarak ne olacağını işlemden önce gösterir.
+                  Every NFT mint and trade is anchored to Bitcoin&apos;s Proof of Work
+                  security through Stacks. Clarity smart contracts show exactly what
+                  will happen with your funds before you sign.
                 </p>
                 <div className="flex items-center gap-4 text-[11px] text-text-muted">
                   <div className="flex items-center gap-2">
                     <ShieldCheck size={16} className="text-neon-green" />
-                    <span>Clarity ile denetlenebilir akıllı kontratlar</span>
+                    <span>Auditable Clarity smart contracts</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Zap size={16} className="text-neon-cyan" />
-                    <span>Mikrobloklarla hızlı onay</span>
+                    <span>Fast confirmation with microblocks</span>
                   </div>
                 </div>
               </div>
@@ -301,27 +300,27 @@ export default function Home() {
           {/* AI spotlight */}
           <div className="space-y-4 lg:col-span-1">
             <h2 className="font-heading text-lg font-semibold text-text-primary">
-              AI Studio Nasıl Çalışır?
+              How AI Studio Works
             </h2>
             <div className="space-y-3 text-xs text-text-secondary">
-              <StepBadge index={1} title="Vizyonunu tanımla">
-                Cyberpunk, soyut veya portre; prompt&apos;unu yaz ya da GPT ile
-                zenginleştir.
+              <StepBadge index={1} title="Define your vision">
+                Cyberpunk, abstract or portrait; write your prompt or enhance it
+                with GPT.
               </StepBadge>
-              <StepBadge index={2} title="AI görseli üretsin">
-                DALL·E 3 veya Stable Diffusion ile tek tıkla yüksek çözünürlüklü
-                görseller al.
+              <StepBadge index={2} title="Let AI generate">
+                Get high-resolution images with DALL·E 3 or Stable Diffusion in
+                one click.
               </StepBadge>
-              <StepBadge index={3} title="Stacks üzerinde mint et ve listele">
-                SIP-009 uyumlu NFT&apos;yi cüzdanına mint et, ardından STX ile pazarda
-                listelenmesini sağla.
+              <StepBadge index={3} title="Mint and list on Stacks">
+                Mint your SIP-009 compliant NFT to your wallet, then list it on
+                the marketplace for STX.
               </StepBadge>
             </div>
             <Link
               href="/create"
               className="mt-2 inline-flex items-center text-xs text-neon-cyan hover:underline"
             >
-              Demo prompt dene
+              Try demo prompt
               <ArrowRight size={14} className="ml-1" />
             </Link>
           </div>
@@ -329,7 +328,7 @@ export default function Home() {
           {/* Recently listed */}
           <div className="space-y-4 lg:col-span-1">
             <h2 className="font-heading text-lg font-semibold text-text-primary">
-              Yeni Listelenenler
+              Recently Listed
             </h2>
             <div className="space-y-3 text-xs">
               {recent.map((nft) => (
@@ -357,7 +356,7 @@ export default function Home() {
                     </p>
                     {nft.isAuction && nft.currentBidStx && (
                       <p className="text-[10px] text-text-muted">
-                        Son teklif {nft.currentBidStx.toFixed(2)} STX
+                        Last bid {nft.currentBidStx.toFixed(2)} STX
                       </p>
                     )}
                   </div>
@@ -369,7 +368,7 @@ export default function Home() {
           {/* Top creators */}
           <div className="space-y-4 lg:col-span-1">
             <h2 className="font-heading text-lg font-semibold text-text-primary">
-              Öne Çıkan Yaratıcılar
+              Top Creators
             </h2>
             <div className="space-y-3 text-xs">
               {topCreators.map((creator) => (
@@ -388,12 +387,12 @@ export default function Home() {
                       {creator.bnsName}
                     </p>
                     <p className="text-[11px] text-text-muted">
-                      {formatNumber(creator.followers)} takipçi •{" "}
-                      {creator.isVerified ? "Doğrulanmış" : "Yaratıcı"}
+                      {formatNumber(creator.followers)} followers •{" "}
+                      {creator.isVerified ? "Verified" : "Creator"}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] text-text-muted">Toplam satış</p>
+                    <p className="text-[10px] text-text-muted">Total Sales</p>
                     <p className="font-mono text-xs text-neon-green">
                       {formatStx(creator.totalSalesStx * 1_000_000, 0)}
                     </p>
