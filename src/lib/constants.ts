@@ -7,18 +7,30 @@ export const APP_DESCRIPTION = "AI-Powered NFT Marketplace on Stacks — Secured
 export const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 // Stacks Network
-export const STACKS_NETWORK = process.env.NEXT_PUBLIC_STACKS_NETWORK || "testnet";
+export const STACKS_NETWORK = process.env.NEXT_PUBLIC_STACKS_NETWORK || "mainnet";
 export const STACKS_MAINNET_API = "https://api.mainnet.hiro.so";
 export const STACKS_TESTNET_API = "https://api.testnet.hiro.so";
 export const STACKS_API_URL = STACKS_NETWORK === "mainnet" ? STACKS_MAINNET_API : STACKS_TESTNET_API;
 
+// Deployer Address
+export const DEPLOYER_ADDRESS = "SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB";
+
 // Contract Addresses (deployer + contract name)
-export const NFT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS || "";
+export const NFT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS || DEPLOYER_ADDRESS;
 export const NFT_CONTRACT_NAME = process.env.NEXT_PUBLIC_NFT_CONTRACT_NAME || "neuralmint-nft";
-export const MARKETPLACE_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_MARKETPLACE_CONTRACT_ADDRESS || "";
+export const MARKETPLACE_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_MARKETPLACE_CONTRACT_ADDRESS || DEPLOYER_ADDRESS;
 export const MARKETPLACE_CONTRACT_NAME = process.env.NEXT_PUBLIC_MARKETPLACE_CONTRACT_NAME || "neuralmint-marketplace";
-export const LAZY_MINT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_LAZY_MINT_CONTRACT_ADDRESS || "";
+export const LAZY_MINT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_LAZY_MINT_CONTRACT_ADDRESS || DEPLOYER_ADDRESS;
 export const LAZY_MINT_CONTRACT_NAME = process.env.NEXT_PUBLIC_LAZY_MINT_CONTRACT_NAME || "neuralmint-lazy-mint";
+
+// Deployed NFT Collections
+export const NFT_COLLECTIONS = [
+  { address: DEPLOYER_ADDRESS, name: "neuralmint-cyber-genesis", symbol: "CYBER", maxSupply: 1000 },
+  { address: DEPLOYER_ADDRESS, name: "neuralmint-neural-dreams", symbol: "DREAM", maxSupply: 500 },
+  { address: DEPLOYER_ADDRESS, name: "neuralmint-bitcoin-punks", symbol: "BPUNK", maxSupply: 2100 },
+  { address: DEPLOYER_ADDRESS, name: "neuralmint-stacks-horizon", symbol: "HORZ", maxSupply: 750 },
+  { address: DEPLOYER_ADDRESS, name: "neuralmint-neon-samurai", symbol: "NEON", maxSupply: 888 },
+] as const;
 
 // Platform
 export const PLATFORM_FEE_BPS = 100; // 1%
