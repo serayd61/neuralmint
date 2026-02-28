@@ -23,7 +23,7 @@ export const useWalletStore = create<WalletState>()(
             stxAddress: null,
             bnsName: null,
             isConnected: false,
-            network: (process.env.NEXT_PUBLIC_STACKS_NETWORK as "mainnet" | "testnet") || "testnet",
+            network: (process.env.NEXT_PUBLIC_STACKS_NETWORK as "mainnet" | "testnet") || "mainnet",
 
             setWalletConnected: (address, bnsName = null) =>
                 set({ stxAddress: address, bnsName, isConnected: true }),

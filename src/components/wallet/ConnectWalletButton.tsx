@@ -36,7 +36,6 @@ export function ConnectWalletButton() {
                 name: APP_NAME,
                 icon: iconUrl,
             },
-            redirectTo: '/',
             onFinish: () => {
                 const userData = userSession.loadUserData();
                 const address =

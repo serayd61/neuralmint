@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Bell, Menu, X, Globe } from "lucide-react";
 import { NAV_LINKS, LANGUAGES, APP_NAME } from "@/lib/constants";
 import { ConnectWalletButton } from "@/components/wallet/ConnectWalletButton";
-import { platformStats } from "@/lib/mock-data";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function Navbar() {
@@ -13,6 +12,24 @@ export function Navbar() {
     const [langOpen, setLangOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [currentLang, setCurrentLang] = useState("en");
+    const [stxPrice, setStxPrice] = useState<number>(0);
+
+    useEffect(() => {
+        async function fetchPrice() {
+            try {
+                const res = await fetch("/api/price");
+                if (res.ok) {
+                    const data = await res.json();
+                    setStxPrice(data.price || 0);
+                }
+            } catch {
+                console.error("Failed to fetch STX price");
+            }
+        }
+        fetchPrice();
+        const interval = setInterval(fetchPrice, 60000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <>
@@ -61,7 +78,7 @@ export function Navbar() {
                             <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bg-card border border-white/5 text-xs">
                                 <span className="text-neon-orange font-bold">STX</span>
                                 <span className="font-mono text-text-primary">
-                                    ${platformStats.stxPriceUsd.toFixed(2)}
+                                    ${stxPrice.toFixed(2)}
                                 </span>
                             </div>
 
@@ -171,7 +188,7 @@ export function Navbar() {
                         <div className="mt-4 flex items-center gap-2 px-4">
                             <span className="text-neon-orange font-bold text-sm">STX</span>
                             <span className="font-mono text-text-primary text-sm">
-                                ${platformStats.stxPriceUsd.toFixed(2)}
+                                ${stxPrice.toFixed(2)}
                             </span>
                         </div>
                         <div className="mt-4 flex gap-2 px-4">
