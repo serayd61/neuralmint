@@ -1,49 +1,54 @@
 "use client";
 
-import { AppConfig, UserSession } from "@stacks/connect";
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
+import { isConnected, getLocalStorage } from "@stacks/connect";
+import { createContext, useContext, useEffect, useCallback, type ReactNode } from "react";
 import { useWalletStore } from "@/stores/wallet-store";
 
 interface WalletContextType {
-    userSession: UserSession;
+    checkConnection: () => void;
 }
 
 const WalletContext = createContext<WalletContextType | null>(null);
 
-export function useUserSession() {
+export function useWalletContext() {
     const ctx = useContext(WalletContext);
-    if (!ctx) throw new Error("useUserSession must be used within WalletProvider");
-    return ctx.userSession;
+    if (!ctx) throw new Error("useWalletContext must be used within WalletProvider");
+    return ctx;
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
     const { setWalletConnected, setDisconnected, network } = useWalletStore();
 
-    const userSession = useMemo(() => {
-        const appConfig = new AppConfig(["store_write", "publish_data"]);
-        return new UserSession({ appConfig });
-    }, []);
+    const checkConnection = useCallback(() => {
+        try {
+            const connected = isConnected();
+            if (connected) {
+                const storage = getLocalStorage();
+                const addresses = storage?.addresses;
+                if (addresses?.stx && addresses.stx.length > 0) {
+                    const stxAddresses = addresses.stx;
+                    const address = stxAddresses.find(a => 
+                        network === "mainnet" ? a.address.startsWith("SP") : a.address.startsWith("ST")
+                    )?.address;
+                    if (address) {
+                        setWalletConnected(address);
+                        return;
+                    }
+                }
+            }
+            setDisconnected();
+        } catch {
+            setDisconnected();
+        }
+    }, [network, setWalletConnected, setDisconnected]);
 
     // Restore session on mount
     useEffect(() => {
-        if (userSession.isUserSignedIn()) {
-            try {
-                const userData = userSession.loadUserData();
-                const address =
-                    network === "mainnet"
-                        ? userData.profile?.stxAddress?.mainnet
-                        : userData.profile?.stxAddress?.testnet;
-                if (address) {
-                    setWalletConnected(address);
-                }
-            } catch {
-                setDisconnected();
-            }
-        }
-    }, [userSession, network, setWalletConnected, setDisconnected]);
+        checkConnection();
+    }, [checkConnection]);
 
     return (
-        <WalletContext.Provider value={{ userSession }}>
+        <WalletContext.Provider value={{ checkConnection }}>
             {children}
         </WalletContext.Provider>
     );
