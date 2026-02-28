@@ -12,13 +12,18 @@ export default function ProfilePage() {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"owned" | "created" | "activity">("owned");
   
-  const creator = mockCreators.find(c => c.address === address) || {
+  const foundCreator = mockCreators.find(c => c.address === address);
+  const creator = foundCreator ? {
+    ...foundCreator,
+    following: 0,
+  } : {
     address,
     bnsName: truncateAddress(address),
     avatarUrl: `https://api.dicebear.com/7.x/shapes/svg?seed=${address}`,
     followers: 0,
     following: 0,
     totalSalesStx: 0,
+    nftCount: 0,
     isVerified: false,
   };
 
@@ -92,7 +97,7 @@ export default function ProfilePage() {
             </div>
             <div className="rounded-lg bg-bg-card/50 p-3">
               <p className="text-xs text-text-muted">Following</p>
-              <p className="mt-1 text-lg text-text-primary">{formatNumber((creator as any).following || 0)}</p>
+              <p className="mt-1 text-lg text-text-primary">{formatNumber(creator.following)}</p>
             </div>
           </div>
         </div>

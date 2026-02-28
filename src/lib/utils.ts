@@ -48,9 +48,15 @@ export function formatBlockTime(blocks: number): string {
 }
 
 /**
- * Format a number with commas
+ * Format a number with commas and optional decimal places
  */
-export function formatNumber(num: number): string {
+export function formatNumber(num: number, decimals?: number): string {
+  if (decimals !== undefined) {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(num);
+  }
   return new Intl.NumberFormat("en-US").format(num);
 }
 

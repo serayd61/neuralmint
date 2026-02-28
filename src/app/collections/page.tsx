@@ -1,107 +1,176 @@
 "use client";
 
-import { Search, TrendingUp, TrendingDown } from "lucide-react";
-import { mockCollections } from "@/lib/mock-data";
-import { formatNumber, formatStx, formatPercentChange } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { formatNumber } from "@/lib/utils";
+import { DEPLOYED_COLLECTIONS } from "@/lib/blockchain-service";
+
+interface CollectionData {
+  contractId: string;
+  name: string;
+  symbol: string;
+  totalMinted: number;
+  maxSupply: number;
+  floorPrice: number;
+  volume: number;
+}
 
 export default function CollectionsPage() {
+  const [collections, setCollections] = useState<CollectionData[]>([]);
+  const [stxPrice, setStxPrice] = useState<number>(1.50);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/collections");
+        if (res.ok) {
+          const data = await res.json();
+          setCollections(data.collections || []);
+          setStxPrice(data.stxPrice || 1.50);
+        }
+      } catch (error) {
+        console.error("Failed to fetch collections:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  const totalVolume = collections.reduce((sum, c) => sum + c.volume, 0);
+  const totalMinted = collections.reduce((sum, c) => sum + c.totalMinted, 0);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-neon-green border-t-transparent" />
+            <p className="mt-4 text-sm text-text-muted">Loading collections...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Browse</p>
-          <h1 className="font-heading text-2xl font-semibold text-text-primary">
-            Collections
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Search collections..."
-              className="w-64 rounded-lg border border-white/10 bg-bg-card pl-9 pr-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-neon-cyan/50 focus:outline-none"
-            />
-          </div>
-          <select className="rounded-lg border border-white/10 bg-bg-card px-3 py-2 text-xs text-text-secondary focus:border-neon-cyan/50 focus:outline-none">
-            <option>Volume: High to Low</option>
-            <option>Volume: Low to High</option>
-            <option>Floor: High to Low</option>
-            <option>Floor: Low to High</option>
-          </select>
-        </div>
+      {/* Header */}
+      <header>
+        <p className="text-xs uppercase tracking-[0.2em] text-text-muted">Marketplace</p>
+        <h1 className="font-heading text-2xl font-semibold text-text-primary">Collections</h1>
+        <p className="mt-1 text-sm text-text-secondary">
+          Explore AI-generated NFT collections on Stacks
+        </p>
       </header>
 
-      <section className="neon-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10 text-left text-xs text-text-muted">
-                <th className="px-4 py-3 font-medium">#</th>
-                <th className="px-4 py-3 font-medium">Collection</th>
-                <th className="px-4 py-3 font-medium text-right">Floor Price</th>
-                <th className="px-4 py-3 font-medium text-right">24h %</th>
-                <th className="px-4 py-3 font-medium text-right">Volume</th>
-                <th className="px-4 py-3 font-medium text-right">Items</th>
-                <th className="px-4 py-3 font-medium text-right">Owners</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockCollections.map((collection, index) => (
-                <tr
-                  key={collection.id}
-                  className="border-b border-white/5 transition-colors hover:bg-white/5"
-                >
-                  <td className="px-4 py-4 text-sm text-text-muted">{index + 1}</td>
-                  <td className="px-4 py-4">
-                    <Link href={`/collections/${collection.id}`} className="flex items-center gap-3">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={collection.avatarUrl}
-                        alt={collection.name}
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-text-primary hover:text-neon-cyan transition-colors">
-                          {collection.name}
-                        </p>
-                        <p className="text-xs text-text-muted">AI Collection</p>
-                      </div>
-                    </Link>
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <span className="font-mono text-sm text-neon-orange">
-                      {collection.floorPriceStx.toFixed(2)} STX
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <span className={`inline-flex items-center gap-1 text-sm ${collection.change24h >= 0 ? "text-neon-green" : "text-neon-red"}`}>
-                      {collection.change24h >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                      {formatPercentChange(collection.change24h)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    <span className="font-mono text-sm text-text-primary">
-                      {formatStx(collection.volumeStx * 1_000_000, 0)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-right text-sm text-text-secondary">
-                    {formatNumber(collection.itemCount)}
-                  </td>
-                  <td className="px-4 py-4 text-right text-sm text-text-secondary">
-                    {formatNumber(collection.uniqueOwners)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Stats */}
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="neon-card p-4">
+          <p className="text-[11px] uppercase tracking-[0.15em] text-text-muted">Total Collections</p>
+          <p className="mt-1 text-xl font-semibold text-neon-green">{collections.length}</p>
+        </div>
+        <div className="neon-card p-4">
+          <p className="text-[11px] uppercase tracking-[0.15em] text-text-muted">Total NFTs Minted</p>
+          <p className="mt-1 text-xl font-semibold text-neon-cyan">{formatNumber(totalMinted)}</p>
+        </div>
+        <div className="neon-card p-4">
+          <p className="text-[11px] uppercase tracking-[0.15em] text-text-muted">Total Volume</p>
+          <p className="mt-1 text-xl font-semibold text-neon-orange">{formatNumber(totalVolume)} STX</p>
+        </div>
+        <div className="neon-card p-4">
+          <p className="text-[11px] uppercase tracking-[0.15em] text-text-muted">STX Price</p>
+          <p className="mt-1 text-xl font-semibold text-text-primary">${stxPrice.toFixed(2)}</p>
         </div>
       </section>
 
-      <div className="flex justify-center">
-        <button className="btn-secondary text-sm">Load More</button>
-      </div>
+      {/* Collections Grid */}
+      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {collections.map((collection, index) => {
+          const collectionInfo = DEPLOYED_COLLECTIONS.find(c => c.contractId === collection.contractId);
+          const progress = (collection.totalMinted / collection.maxSupply) * 100;
+          
+          return (
+            <Link
+              key={collection.contractId}
+              href={`/collections/${collection.symbol.toLowerCase()}`}
+              className="neon-card group overflow-hidden transition-all hover:border-neon-green/50"
+            >
+              {/* Banner */}
+              <div className="relative h-32 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`${collectionInfo?.imageBase || "https://picsum.photos/seed/col"}${index}/800/300`}
+                  alt={collection.name}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-bg-primary to-transparent" />
+                <div className="absolute bottom-3 left-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-bg-card/90 backdrop-blur-sm">
+                    <span className="text-sm font-bold text-neon-green">{collection.symbol}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-4">
+                <h3 className="text-lg font-semibold text-text-primary">{collection.name}</h3>
+                <p className="mt-1 text-xs text-text-muted">
+                  {collectionInfo?.description || "AI-generated NFT collection"}
+                </p>
+
+                {/* Progress Bar */}
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-text-muted">Minted</span>
+                    <span className="text-text-primary">
+                      {collection.totalMinted}/{collection.maxSupply}
+                    </span>
+                  </div>
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-bg-card">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-neon-green to-neon-cyan transition-all"
+                      style={{ width: `${Math.min(progress, 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-bg-card p-2">
+                    <p className="text-[10px] text-text-muted">Floor</p>
+                    <p className="font-mono text-sm text-neon-orange">{collection.floorPrice} STX</p>
+                  </div>
+                  <div className="rounded-lg bg-bg-card p-2">
+                    <p className="text-[10px] text-text-muted">Volume</p>
+                    <p className="font-mono text-sm text-text-primary">{formatNumber(collection.volume)} STX</p>
+                  </div>
+                </div>
+
+                {/* Mint Button */}
+                <button className="mt-4 w-full rounded-lg bg-neon-green/10 py-2.5 text-sm font-medium text-neon-green transition-all hover:bg-neon-green hover:text-black">
+                  Mint Now
+                </button>
+              </div>
+            </Link>
+          );
+        })}
+      </section>
+
+      {/* Empty State */}
+      {collections.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-4 h-20 w-20 rounded-full bg-bg-card flex items-center justify-center">
+            <span className="text-4xl">📦</span>
+          </div>
+          <h3 className="text-lg font-semibold text-text-primary">No Collections Yet</h3>
+          <p className="mt-2 text-sm text-text-muted">
+            Collections will appear here once they are deployed
+          </p>
+        </div>
+      )}
     </div>
   );
 }
