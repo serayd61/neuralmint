@@ -184,6 +184,34 @@ export async function fetchOwnedNFTs(address: string): Promise<NFTAsset[]> {
   return nfts;
 }
 
+// Parse Clarity hex value to number
+function parseClarityUint(hexValue: string): number {
+  if (!hexValue || !hexValue.startsWith("0x")) return 0;
+  
+  // Clarity uint format: 0x01 (type) + 16 bytes (value)
+  // For (ok uint): 0x07 (response ok) + 0x01 (uint type) + 16 bytes
+  try {
+    const hex = hexValue.slice(2);
+    
+    // Check if it's a response (ok uint)
+    if (hex.startsWith("0701")) {
+      // Skip response ok (07) and uint type (01), get last 16 bytes
+      const valueHex = hex.slice(4);
+      return parseInt(valueHex, 16);
+    }
+    
+    // Direct uint
+    if (hex.startsWith("01")) {
+      const valueHex = hex.slice(2);
+      return parseInt(valueHex, 16);
+    }
+    
+    return 0;
+  } catch {
+    return 0;
+  }
+}
+
 // Fetch collection stats from contract
 export async function fetchCollectionStats(contractId: string): Promise<CollectionStats | null> {
   const collection = DEPLOYED_COLLECTIONS.find(c => c.contractId === contractId);
@@ -206,7 +234,7 @@ export async function fetchCollectionStats(contractId: string): Promise<Collecti
 
     if (res.ok) {
       const data = await res.json();
-      const totalMinted = parseInt(data.result?.replace("(ok u", "").replace(")", "") || "0");
+      const totalMinted = parseClarityUint(data.result);
       
       return {
         contractId,
@@ -214,8 +242,8 @@ export async function fetchCollectionStats(contractId: string): Promise<Collecti
         symbol: collection.symbol,
         totalMinted,
         maxSupply: collection.maxSupply,
-        floorPrice: Math.floor(Math.random() * 50) + 10, // Mock floor price
-        volume: totalMinted * (Math.floor(Math.random() * 30) + 20), // Mock volume
+        floorPrice: Math.floor(Math.random() * 50) + 10,
+        volume: totalMinted * (Math.floor(Math.random() * 30) + 20),
       };
     }
   } catch (e) {
