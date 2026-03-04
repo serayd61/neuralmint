@@ -18,14 +18,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+     <head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+  <link href="..." rel="stylesheet" />
+  <meta name="talentapp:project_verification" content="86558d79e107647d4dd8883335938b2b84e98404e5dba5a504659db4e5ab94d78ea48670dab74d9f5b13dc4ef746a3502e29bf14c6bb6303ebe9cd6116c90886" />
+</head>
       <body className="min-h-screen bg-bg-primary text-text-primary font-body antialiased">
         <WalletProvider>
           <QueryProvider>
