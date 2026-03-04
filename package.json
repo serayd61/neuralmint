@@ -7,8 +7,9 @@
     "build": "node ./node_modules/next/dist/bin/next build --webpack",
     "start": "node ./node_modules/next/dist/bin/next start",
     "lint": "node ./node_modules/eslint/bin/eslint.js .",
+    "scan:secrets": "node ./scripts/secret-check.js",
     "typecheck": "node ./node_modules/typescript/lib/tsc.js --noEmit",
-    "check": "npm run typecheck && npm run lint && npm run build",
+    "check": "npm run scan:secrets && npm run typecheck && npm run lint && npm run build",
     "deploy:contracts:testnet": "STACKS_DEPLOY_NETWORK=testnet node ./scripts/deploy-contracts.mjs",
     "deploy:contracts:mainnet": "STACKS_DEPLOY_NETWORK=mainnet node ./scripts/deploy-contracts.mjs"
   },

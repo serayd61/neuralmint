@@ -9,9 +9,14 @@ const {
 } = require("@stacks/transactions");
 const { STACKS_MAINNET } = require("@stacks/network");
 
-const PRIVATE_KEY = "4c664d1c1c36f56063823b6a7cbc8185ab9bcd84d4b291500667bc7ad5e3054b01";
-const ADDRESS = "SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB";
+const PRIVATE_KEY = process.env.STACKS_PRIVATE_KEY || process.env.STACKS_DEPLOYER_KEY;
+const ADDRESS = process.env.STACKS_ADDRESS;
 const BURN_ADDRESS = "SP000000000000000000002Q6VF78";
+
+if (!PRIVATE_KEY || !ADDRESS) {
+  console.error("Missing STACKS_PRIVATE_KEY/STACKS_DEPLOYER_KEY or STACKS_ADDRESS");
+  process.exit(1);
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

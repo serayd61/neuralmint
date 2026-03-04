@@ -3,9 +3,14 @@ const { makeSTXTokenTransfer, broadcastTransaction, AnchorMode } = txPkg;
 import netPkg from '@stacks/network';
 const { STACKS_MAINNET } = netPkg;
 
-const PRIVATE_KEY = '4c664d1c1c36f56063823b6a7cbc8185ab9bcd84d4b291500667bc7ad5e3054b01';
+const PRIVATE_KEY = process.env.STACKS_PRIVATE_KEY || process.env.STACKS_DEPLOYER_KEY;
 const BURN_ADDRESS = 'SP000000000000000000002Q6VF78';
 const network = STACKS_MAINNET;
+
+if (!PRIVATE_KEY) {
+  console.error('Missing STACKS_PRIVATE_KEY or STACKS_DEPLOYER_KEY');
+  process.exit(1);
+}
 
 async function main() {
   for (const nonce of [601, 602]) {

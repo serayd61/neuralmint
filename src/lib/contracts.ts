@@ -15,6 +15,8 @@ import {
   MARKETPLACE_CONTRACT_NAME,
   LAZY_MINT_CONTRACT_ADDRESS,
   LAZY_MINT_CONTRACT_NAME,
+  AUCTION_CONTRACT_ADDRESS,
+  AUCTION_CONTRACT_NAME,
   MICRO_STX_PER_STX,
 } from './constants';
 
@@ -189,6 +191,75 @@ export async function redeemLazyMint(
     postConditionMode: PostConditionMode.Allow,
     onFinish: (data) => {
       console.log('Lazy mint transaction:', data.txId);
+      return data;
+    },
+  });
+}
+
+// ── Auction Functions ──
+
+export interface CreateAuctionParams {
+  nftContract: string;
+  tokenId: number;
+  reservePriceStx: number;
+  minBidIncrementStx: number;
+  durationBlocks: number;
+}
+
+export interface PlaceBidParams {
+  auctionId: number;
+  bidAmountStx: number;
+}
+
+export async function createAuction(params: CreateAuctionParams) {
+  return openContractCall({
+    contractAddress: AUCTION_CONTRACT_ADDRESS,
+    contractName: AUCTION_CONTRACT_NAME,
+    functionName: 'create-auction',
+    functionArgs: [
+      principalCV(params.nftContract),
+      uintCV(params.tokenId),
+      uintCV(Math.floor(params.reservePriceStx * MICRO_STX_PER_STX)),
+      uintCV(Math.floor(params.minBidIncrementStx * MICRO_STX_PER_STX)),
+      uintCV(params.durationBlocks),
+    ],
+    postConditionMode: PostConditionMode.Allow,
+    onFinish: (data) => {
+      console.log('Create auction transaction:', data.txId);
+      return data;
+    },
+  });
+}
+
+export async function placeBid(params: PlaceBidParams) {
+  return openContractCall({
+    contractAddress: AUCTION_CONTRACT_ADDRESS,
+    contractName: AUCTION_CONTRACT_NAME,
+    functionName: 'place-bid',
+    functionArgs: [
+      uintCV(params.auctionId),
+      uintCV(Math.floor(params.bidAmountStx * MICRO_STX_PER_STX)),
+    ],
+    postConditionMode: PostConditionMode.Allow,
+    onFinish: (data) => {
+      console.log('Place bid transaction:', data.txId);
+      return data;
+    },
+  });
+}
+
+export async function settleAuction(auctionId: number, nftContract: string) {
+  return openContractCall({
+    contractAddress: AUCTION_CONTRACT_ADDRESS,
+    contractName: AUCTION_CONTRACT_NAME,
+    functionName: 'settle-auction',
+    functionArgs: [
+      uintCV(auctionId),
+      principalCV(nftContract),
+    ],
+    postConditionMode: PostConditionMode.Allow,
+    onFinish: (data) => {
+      console.log('Settle auction transaction:', data.txId);
       return data;
     },
   });

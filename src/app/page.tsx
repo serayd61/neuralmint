@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Bitcoin, Sparkles, Zap, ShieldCheck, Eye, Heart, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { mockNFTs, mockCollections, mockCreators, platformStats } from "@/lib/mock-data";
+import { mockNFTs, mockCollections, mockCreators } from "@/lib/mock-data";
 import { formatNumber, formatPercentChange, formatStx } from "@/lib/utils";
 
 const fadeUp = (delay = 0) => ({
@@ -18,6 +18,21 @@ export default function Home() {
   const recent = mockNFTs.slice(2, 8);
   const topCollections = mockCollections.slice(0, 5);
   const topCreators = mockCreators.slice(0, 4);
+
+  const [platformStats, setPlatformStats] = useState({
+    totalNftsMinted: 0,
+    totalVolumeStx: 0,
+    activeCreators: 0,
+    floorPriceStx: 0,
+    stxPriceUsd: 0,
+  });
+
+  useEffect(() => {
+    fetch("/api/v1/stats")
+      .then((res) => res.json())
+      .then((data) => setPlatformStats(data))
+      .catch(console.error);
+  }, []);
 
   return (
     <div className="relative">

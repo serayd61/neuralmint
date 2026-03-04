@@ -6,9 +6,14 @@ const {
 const { STACKS_MAINNET } = require("@stacks/network");
 const fs = require("fs");
 
-const PRIVATE_KEY = process.env.STACKS_PRIVATE_KEY;
-const ADDRESS = "SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB";
+const PRIVATE_KEY = process.env.STACKS_PRIVATE_KEY || process.env.STACKS_DEPLOYER_KEY;
+const ADDRESS = process.env.STACKS_ADDRESS;
 const HIRO_API = "https://api.mainnet.hiro.so";
+
+if (!PRIVATE_KEY || !ADDRESS) {
+  console.error("Missing STACKS_PRIVATE_KEY/STACKS_DEPLOYER_KEY or STACKS_ADDRESS");
+  process.exit(1);
+}
 
 async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -26,7 +31,7 @@ const PAID_NFT_CONTRACT = `
 (impl-trait 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.nft-trait.nft-trait)
 
 (define-constant CONTRACT-OWNER tx-sender)
-(define-constant PLATFORM-WALLET 'SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB)
+(define-constant PLATFORM-WALLET CONTRACT-OWNER)
 (define-constant MINT-PRICE u5000000)
 
 (define-constant ERR-NOT-AUTHORIZED (err u401))

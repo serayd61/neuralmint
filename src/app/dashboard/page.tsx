@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { formatNumber } from "@/lib/utils";
+import { useWalletStore } from "@/stores/wallet-store";
+import Link from "next/link";
 
 interface WalletData {
   address: string;
@@ -30,9 +32,8 @@ interface PriceData {
   price: number;
 }
 
-const OWNER_ADDRESS = "SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB";
-
 export default function DashboardPage() {
+  const { stxAddress, isConnected, bnsName } = useWalletStore();
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [collections, setCollections] = useState<CollectionData[]>([]);
   const [stxPrice, setStxPrice] = useState<number>(1.50);
@@ -40,10 +41,15 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"all" | "listed">("all");
 
   useEffect(() => {
+    if (!stxAddress) {
+      setLoading(false);
+      return;
+    }
+
     async function fetchData() {
       try {
         const [walletRes, collectionsRes, priceRes] = await Promise.all([
-          fetch(`/api/wallet/${OWNER_ADDRESS}`),
+          fetch(`/api/wallet/${stxAddress}`),
           fetch("/api/collections"),
           fetch("/api/price"),
         ]);
@@ -72,7 +78,7 @@ export default function DashboardPage() {
     fetchData();
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [stxAddress]);
 
   const totalMinted = collections.reduce((sum, c) => sum + c.totalMinted, 0);
   const totalVolume = collections.reduce((sum, c) => sum + c.volume, 0);
@@ -80,6 +86,28 @@ export default function DashboardPage() {
     const collection = collections.find(c => c.contractId === nft.contractId);
     return sum + (collection?.floorPrice || 25);
   }, 0) || 0;
+
+  if (!isConnected || !stxAddress) {
+    return (
+      <div className="mx-auto max-w-7xl space-y-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-6 h-20 w-20 rounded-full bg-neon-cyan/10 border border-neon-cyan/20 flex items-center justify-center">
+            <span className="text-3xl">🔗</span>
+          </div>
+          <h2 className="text-xl font-semibold text-text-primary">Connect Your Wallet</h2>
+          <p className="mt-2 max-w-md text-sm text-text-muted">
+            Connect your Stacks wallet to view your NFTs, balances, and collection stats.
+          </p>
+          <Link
+            href="/"
+            className="mt-6 rounded-lg bg-neon-green px-6 py-2.5 text-sm font-semibold text-black transition-all hover:bg-neon-green/90"
+          >
+            Connect Wallet
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -102,7 +130,7 @@ export default function DashboardPage() {
           <p className="text-xs uppercase tracking-[0.2em] text-text-muted">My Account</p>
           <h1 className="font-heading text-2xl font-semibold text-text-primary">Dashboard</h1>
           <p className="mt-1 text-xs text-text-secondary">
-            Welcome back, <span className="text-neon-cyan">serkan.btc</span>
+            Welcome back, <span className="text-neon-cyan">{bnsName || `${stxAddress.slice(0, 8)}...${stxAddress.slice(-4)}`}</span>
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -200,7 +228,7 @@ export default function DashboardPage() {
           <div className="mt-4 rounded-lg border border-neon-green/20 bg-neon-green/5 p-3">
             <p className="text-[11px] text-text-muted">Your Wallet</p>
             <p className="mt-1 font-mono text-xs text-neon-green break-all">
-              {OWNER_ADDRESS.slice(0, 20)}...
+              {stxAddress ? `${stxAddress.slice(0, 20)}...` : "Not connected"}
             </p>
           </div>
         </div>

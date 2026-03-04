@@ -3,7 +3,7 @@
 // ============================================
 
 const HIRO_API = "https://api.mainnet.hiro.so";
-const OWNER_ADDRESS = "SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB";
+const OWNER_ADDRESS = "SP2MEAT2GYJF0EXPQKH7A9S3KTNG36RYZAMA74VGJ";
 
 // Our deployed NFT collections
 export const DEPLOYED_COLLECTIONS = [
@@ -242,8 +242,8 @@ export async function fetchCollectionStats(contractId: string): Promise<Collecti
         symbol: collection.symbol,
         totalMinted,
         maxSupply: collection.maxSupply,
-        floorPrice: Math.floor(Math.random() * 50) + 10,
-        volume: totalMinted * (Math.floor(Math.random() * 30) + 20),
+        floorPrice: totalMinted > 0 ? 25 : 0,
+        volume: totalMinted > 0 ? totalMinted * 25 : 0,
       };
     }
   } catch (e) {

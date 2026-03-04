@@ -26,6 +26,27 @@ export default function CreatePage() {
   const [royaltyBps, setRoyaltyBps] = useState(500); // 5%
   const [error, setError] = useState<string | null>(null);
   const [txId, setTxId] = useState<string | null>(null);
+  const [enhancing, setEnhancing] = useState(false);
+
+  const handleEnhancePrompt = async () => {
+    if (!prompt.trim()) return;
+    setEnhancing(true);
+    try {
+      const res = await fetch("/api/v1/enhance-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json();
+      if (data.success && data.enhanced) {
+        setPrompt(data.enhanced);
+      }
+    } catch (err) {
+      console.error("Enhance failed:", err);
+    } finally {
+      setEnhancing(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -189,9 +210,13 @@ export default function CreatePage() {
           <div className="neon-card p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-text-primary">2) Prompt</h2>
-              <button className="inline-flex items-center gap-1 rounded-md border border-neon-purple/30 bg-neon-purple/10 px-2.5 py-1 text-[11px] text-neon-purple">
-                <Wand2 size={12} />
-                Enhance with AI
+              <button
+                onClick={handleEnhancePrompt}
+                disabled={enhancing || !prompt.trim()}
+                className="inline-flex items-center gap-1 rounded-md border border-neon-purple/30 bg-neon-purple/10 px-2.5 py-1 text-[11px] text-neon-purple hover:bg-neon-purple/20 transition-colors disabled:opacity-50"
+              >
+                {enhancing ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
+                {enhancing ? "Enhancing..." : "Enhance with AI"}
               </button>
             </div>
             <textarea

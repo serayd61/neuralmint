@@ -13,7 +13,7 @@ export const STACKS_TESTNET_API = "https://api.testnet.hiro.so";
 export const STACKS_API_URL = STACKS_NETWORK === "mainnet" ? STACKS_MAINNET_API : STACKS_TESTNET_API;
 
 // Deployer Address
-export const DEPLOYER_ADDRESS = "SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB";
+export const DEPLOYER_ADDRESS = "SP2MEAT2GYJF0EXPQKH7A9S3KTNG36RYZAMA74VGJ";
 
 // Contract Addresses (deployer + contract name)
 export const NFT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS || DEPLOYER_ADDRESS;
@@ -22,6 +22,8 @@ export const MARKETPLACE_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_MARKETPLACE_
 export const MARKETPLACE_CONTRACT_NAME = process.env.NEXT_PUBLIC_MARKETPLACE_CONTRACT_NAME || "neuralmint-marketplace";
 export const LAZY_MINT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_LAZY_MINT_CONTRACT_ADDRESS || DEPLOYER_ADDRESS;
 export const LAZY_MINT_CONTRACT_NAME = process.env.NEXT_PUBLIC_LAZY_MINT_CONTRACT_NAME || "neuralmint-lazy-mint";
+export const AUCTION_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_AUCTION_CONTRACT_ADDRESS || DEPLOYER_ADDRESS;
+export const AUCTION_CONTRACT_NAME = process.env.NEXT_PUBLIC_AUCTION_CONTRACT_NAME || "neuralmint-auction";
 
 // Deployed NFT Collections
 export const NFT_COLLECTIONS = [

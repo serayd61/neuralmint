@@ -13,9 +13,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PRIVATE_KEY = '4c664d1c1c36f56063823b6a7cbc8185ab9bcd84d4b291500667bc7ad5e3054b01';
-const ADDRESS = 'SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB';
+const PRIVATE_KEY = process.env.STACKS_PRIVATE_KEY || process.env.STACKS_DEPLOYER_KEY;
+const ADDRESS = process.env.STACKS_ADDRESS;
 const network = STACKS_MAINNET;
+
+if (!PRIVATE_KEY || !ADDRESS) {
+  console.error('Missing STACKS_PRIVATE_KEY/STACKS_DEPLOYER_KEY or STACKS_ADDRESS');
+  process.exit(1);
+}
 
 async function getCurrentNonce() {
   const response = await fetch(`https://api.mainnet.hiro.so/extended/v1/address/${ADDRESS}/nonces`);

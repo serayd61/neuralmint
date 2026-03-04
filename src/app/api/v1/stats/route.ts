@@ -1,15 +1,29 @@
 import { NextResponse } from "next/server";
-import { platformStats } from "@/lib/mock-data";
+import { fetchPlatformStats } from "@/lib/blockchain-service";
 
 export const runtime = "nodejs";
 
 export async function GET() {
-  return NextResponse.json({
-    totalNftsMinted: platformStats.totalNftsMinted,
-    totalVolumeStx: platformStats.totalVolumeStx,
-    activeCreators: platformStats.activeCreators,
-    floorPriceStx: platformStats.floorPriceStx,
-    stxPriceUsd: platformStats.stxPriceUsd,
-    updatedAt: new Date().toISOString(),
-  });
+  try {
+    const stats = await fetchPlatformStats();
+    return NextResponse.json({
+      totalNftsMinted: stats.totalMinted,
+      totalVolumeStx: stats.totalVolume,
+      activeCreators: stats.collectionsCount,
+      floorPriceStx: stats.avgFloorPrice,
+      stxPriceUsd: stats.stxPrice,
+      collections: stats.collections,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("Stats fetch error:", error);
+    return NextResponse.json({
+      totalNftsMinted: 0,
+      totalVolumeStx: 0,
+      activeCreators: 0,
+      floorPriceStx: 0,
+      stxPriceUsd: 0,
+      updatedAt: new Date().toISOString(),
+    });
+  }
 }

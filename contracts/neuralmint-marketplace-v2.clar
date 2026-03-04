@@ -2,8 +2,8 @@
 ;; Platform fee: 1% on all sales
 ;; Royalty support for creators
 
-(define-constant CONTRACT-OWNER 'SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB)
-(define-constant PLATFORM-WALLET 'SP2PEBKJ2W1ZDDF2QQ6Y4FXKZEDPT9J9R2NKD9WJB)
+(define-constant CONTRACT-OWNER tx-sender)
+(define-constant PLATFORM-WALLET CONTRACT-OWNER)
 (define-constant PLATFORM-FEE-BPS u100) ;; 1% = 100 basis points
 
 (define-constant ERR-NOT-AUTHORIZED (err u401))
