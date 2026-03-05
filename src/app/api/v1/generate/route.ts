@@ -1,103 +1,62 @@
-import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { NextRequest, NextResponse } from "next/server";
+import { verifyPayment } from "@/lib/fee-service";
+import { generateImage } from "@/lib/ai-providers";
+import { AI_MODELS } from "@/lib/constants";
+import type { AIProvider } from "@/lib/constants";
+
+// Track used transaction IDs to prevent double-spend
+const usedTxIds = new Set<string>();
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt, model, size, style } = body;
+    const { prompt, model, size, style, txId, provider } = body;
 
     if (!prompt) {
+      return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
+    }
+
+    // Determine provider type
+    const aiProvider: AIProvider = provider === "openclaw" ? "openclaw" : "openai";
+
+    // Find model config to get expected fee
+    const modelConfig = AI_MODELS.find((m) => m.id === model);
+    const expectedFee = modelConfig?.fee ?? 2.0;
+
+    // Payment verification gate
+    if (!txId) {
       return NextResponse.json(
-        { error: 'Prompt is required' },
-        { status: 400 }
+        { error: "Payment transaction ID required. Please pay the generation fee first." },
+        { status: 402 }
       );
     }
 
-    // Create a hash of the prompt for on-chain storage
-    const promptHash = crypto
-      .createHash('sha256')
-      .update(prompt)
-      .digest('hex');
-
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
-      // Return mock data for development/demo
-      const seed = promptHash.slice(0, 8);
-      return NextResponse.json({
-        success: true,
-        imageUrl: `https://picsum.photos/seed/${seed}/1024/1024`,
-        model: model || 'dall-e-3',
-        promptHash,
-        mock: true,
-      });
+    if (usedTxIds.has(txId)) {
+      return NextResponse.json(
+        { error: "This transaction has already been used for a generation." },
+        { status: 409 }
+      );
     }
 
-    // If OpenAI is configured, make the API call
-    try {
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: model || 'dall-e-3',
-          prompt: prompt,
-          n: 1,
-          size: size || '1024x1024',
-          style: style || 'vivid',
-          response_format: 'url',
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('OpenAI error:', error);
-        // Fallback to mock on error
-        const seed = promptHash.slice(0, 8);
-        return NextResponse.json({
-          success: true,
-          imageUrl: `https://picsum.photos/seed/${seed}/1024/1024`,
-          model: model || 'dall-e-3',
-          promptHash,
-          mock: true,
-        });
-      }
-
-      const data = await response.json();
-      const imageUrl = data.data?.[0]?.url;
-      const revisedPrompt = data.data?.[0]?.revised_prompt;
-
-      if (!imageUrl) {
-        return NextResponse.json(
-          { error: 'Failed to generate image' },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({
-        success: true,
-        imageUrl,
-        revisedPrompt,
-        model: model || 'dall-e-3',
-        promptHash,
-      });
-    } catch (apiError) {
-      console.error('OpenAI API error:', apiError);
-      // Fallback to mock
-      const seed = promptHash.slice(0, 8);
-      return NextResponse.json({
-        success: true,
-        imageUrl: `https://picsum.photos/seed/${seed}/1024/1024`,
-        model: model || 'dall-e-3',
-        promptHash,
-        mock: true,
-      });
+    const verification = await verifyPayment(txId, expectedFee);
+    if (!verification.valid) {
+      return NextResponse.json(
+        { error: `Payment verification failed: ${verification.error}` },
+        { status: 402 }
+      );
     }
+
+    // Mark txId as used
+    usedTxIds.add(txId);
+
+    // Generate image with the selected provider
+    const result = await generateImage(aiProvider, prompt, model, size, style);
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Generation error:', error);
+    console.error("Generation error:", error);
     return NextResponse.json(
-      { error: 'Failed to generate image' },
+      { error: "Failed to generate image" },
       { status: 500 }
     );
   }

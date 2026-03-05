@@ -4,7 +4,7 @@
 
 (use-trait nft-trait .sip009-nft-trait.nft-trait)
 
-;; ── Error Constants ──
+;; -- Error Constants --
 (define-constant ERR-NOT-AUTHORIZED (err u401))
 (define-constant ERR-NOT-FOUND (err u404))
 (define-constant ERR-INVALID-AMOUNT (err u400))
@@ -15,20 +15,20 @@
 (define-constant ERR-PAUSED (err u503))
 (define-constant ERR-SELF-BID (err u414))
 
-;; ── Configuration ──
+;; -- Configuration --
 (define-constant CONTRACT-OWNER tx-sender)
 (define-constant PLATFORM-FEE-BPS u100) ;; 1%
 (define-constant MIN-DURATION u6)       ;; ~1 hour minimum (6 blocks)
 (define-constant AUTO-EXTEND-BLOCKS u3) ;; ~30 min auto-extend if bid in last 30 min
 
-;; ── State ──
+;; -- State --
 (define-data-var last-auction-id uint u0)
 (define-data-var platform-wallet principal tx-sender)
 (define-data-var contract-paused bool false)
 (define-data-var total-auctions-settled uint u0)
 (define-data-var total-volume uint u0)
 
-;; ── Auction Data ──
+;; -- Auction Data --
 (define-map auctions uint {
   seller: principal,
   nft-contract: principal,
@@ -42,7 +42,7 @@
   cancelled: bool
 })
 
-;; ── Read-Only Functions ──
+;; -- Read-Only Functions --
 
 (define-read-only (get-auction (auction-id uint))
   (ok (map-get? auctions auction-id))
@@ -75,7 +75,7 @@
   })
 )
 
-;; ── Public Functions ──
+;; -- Public Functions --
 
 ;; Create a new auction
 (define-public (create-auction
@@ -204,7 +204,7 @@
   )
 )
 
-;; ── Admin Functions ──
+;; -- Admin Functions --
 
 (define-public (set-platform-wallet (new-wallet principal))
   (begin

@@ -13,7 +13,10 @@ export const STACKS_TESTNET_API = "https://api.testnet.hiro.so";
 export const STACKS_API_URL = STACKS_NETWORK === "mainnet" ? STACKS_MAINNET_API : STACKS_TESTNET_API;
 
 // Deployer Address
-export const DEPLOYER_ADDRESS = "SP2MEAT2GYJF0EXPQKH7A9S3KTNG36RYZAMA74VGJ";
+export const DEPLOYER_ADDRESS = "SP387HJN7F2HR9KQ4250YGFCA4815T1F9X7N74C5W";
+
+// Platform Wallet (receives AI generation fees + marketplace fees)
+export const PLATFORM_WALLET = process.env.NEXT_PUBLIC_PLATFORM_WALLET || DEPLOYER_ADDRESS;
 
 // Contract Addresses (deployer + contract name)
 export const NFT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS || DEPLOYER_ADDRESS;
@@ -62,10 +65,13 @@ export const RARITY_TIERS = [
     { name: "Legendary", min: 81, max: 100, color: "#FFE600" },
 ] as const;
 
-// AI Models
+// AI Provider Types
+export type AIProvider = "openai" | "openclaw";
+
+// AI Models with fee configuration
 export const AI_MODELS = [
-    { id: "dall-e-3", name: "DALL-E 3", provider: "OpenAI" },
-    { id: "stable-diffusion", name: "Stable Diffusion", provider: "Replicate" },
+    { id: "dall-e-3", name: "DALL-E 3", provider: "OpenAI", providerType: "openai" as const, fee: 2.0 },
+    { id: "openclaw-sd", name: "Stable Diffusion XL", provider: "OpenClaw", providerType: "openclaw" as const, fee: 1.5 },
 ] as const;
 
 // Categories

@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   AnchorMode,
+  ClarityVersion,
   broadcastTransaction,
   getAddressFromPrivateKey,
   makeContractDeploy,
@@ -30,12 +31,17 @@ const apiBase =
 const network = createNetwork(networkName);
 const deployerAddress = getAddressFromPrivateKey(privateKey, networkName);
 
-const contracts = [
+const allContracts = [
   { name: "sip009-nft-trait", file: "clarity/contracts/sip009-nft-trait.clar" },
   { name: "neuralmint-nft", file: "clarity/contracts/neuralmint-nft.clar" },
   { name: "neuralmint-marketplace", file: "clarity/contracts/neuralmint-marketplace.clar" },
   { name: "neuralmint-lazy-mint", file: "clarity/contracts/neuralmint-lazy-mint.clar" },
+  { name: "neuralmint-auction", file: "clarity/contracts/neuralmint-auction.clar" },
 ];
+
+// CLI: pass --skip=N to skip first N already-deployed contracts
+const skipCount = Number(process.argv.find(a => a.startsWith("--skip="))?.split("=")[1] || 0);
+const contracts = allContracts.slice(skipCount);
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -80,6 +86,7 @@ async function deployAll() {
     const tx = await makeContractDeploy({
       contractName: contract.name,
       codeBody,
+      clarityVersion: ClarityVersion.Clarity2,
       senderKey: privateKey,
       network,
       anchorMode: AnchorMode.Any,

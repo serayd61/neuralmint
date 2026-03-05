@@ -1,12 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles, Wand2, ImagePlus, Zap, Coins, Loader2, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Sparkles, Wand2, ImagePlus, Zap, Coins, Loader2, Check, Wallet, Cloud, Server } from "lucide-react";
 import { useWalletStore } from "@/stores/wallet-store";
 import { mintNFT } from "@/lib/contracts";
 import { AI_MODELS } from "@/lib/constants";
+import { payGenerationFee } from "@/lib/fee-service";
 
-type GenerationState = "idle" | "generating" | "generated" | "uploading" | "minting" | "success";
+type GenerationState = "idle" | "paying" | "generating" | "generated" | "uploading" | "minting" | "success";
+
+interface ProviderAvailability {
+  openai: boolean;
+  openclaw: boolean;
+  stableDiffusion: boolean;
+}
 
 export default function CreatePage() {
   const { isConnected, stxAddress } = useWalletStore();
@@ -27,6 +34,28 @@ export default function CreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [txId, setTxId] = useState<string | null>(null);
   const [enhancing, setEnhancing] = useState(false);
+  const [providers, setProviders] = useState<ProviderAvailability | null>(null);
+
+  // Fetch available providers on mount
+  useEffect(() => {
+    fetch("/api/v1/providers")
+      .then((res) => res.json())
+      .then((data) => setProviders(data))
+      .catch(() => setProviders({ openai: false, openclaw: false, stableDiffusion: false }));
+  }, []);
+
+  // Get selected model config
+  const selectedModelConfig = AI_MODELS.find((m) => m.id === selectedModel);
+  const generationFee = selectedModelConfig?.fee ?? 2.0;
+  const selectedProvider = selectedModelConfig?.providerType ?? "openai";
+
+  // Check if selected provider is available
+  const isProviderAvailable = (providerType: string) => {
+    if (!providers) return true; // Loading, assume available
+    if (providerType === "openai") return providers.openai;
+    if (providerType === "openclaw") return providers.openclaw || providers.stableDiffusion;
+    return false;
+  };
 
   const handleEnhancePrompt = async () => {
     if (!prompt.trim()) return;
@@ -35,7 +64,7 @@ export default function CreatePage() {
       const res = await fetch("/api/v1/enhance-prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, provider: selectedProvider }),
       });
       const data = await res.json();
       if (data.success && data.enhanced) {
@@ -54,8 +83,27 @@ export default function CreatePage() {
       return;
     }
 
-    setState("generating");
+    if (!isConnected || !stxAddress) {
+      setError("Please connect your wallet to pay the generation fee");
+      return;
+    }
+
     setError(null);
+
+    // Step 1: Pay generation fee
+    setState("paying");
+    let paymentTxId: string;
+
+    try {
+      paymentTxId = await payGenerationFee(generationFee);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Payment failed");
+      setState("idle");
+      return;
+    }
+
+    // Step 2: Generate image with payment proof
+    setState("generating");
 
     try {
       const response = await fetch("/api/v1/generate", {
@@ -66,6 +114,8 @@ export default function CreatePage() {
           model: selectedModel,
           size,
           style,
+          txId: paymentTxId,
+          provider: selectedProvider,
         }),
       });
 
@@ -109,10 +159,12 @@ export default function CreatePage() {
           description: nftDescription,
           attributes: [
             { trait_type: "AI Model", value: selectedModel },
+            { trait_type: "AI Provider", value: selectedProvider },
             { trait_type: "Style", value: style },
           ],
           aiMetadata: {
             model: selectedModel,
+            provider: selectedProvider,
             promptHash,
           },
         }),
@@ -134,7 +186,7 @@ export default function CreatePage() {
         royaltyBps,
         aiModel: selectedModel,
         promptHash,
-        generationParams: JSON.stringify({ size, style, prompt: prompt.slice(0, 100) }),
+        generationParams: JSON.stringify({ size, style, provider: selectedProvider, prompt: prompt.slice(0, 100) }),
       });
 
       setState("success");
@@ -146,6 +198,8 @@ export default function CreatePage() {
 
   const getButtonText = () => {
     switch (state) {
+      case "paying":
+        return "Confirm Payment in Wallet...";
       case "generating":
         return "Generating...";
       case "uploading":
@@ -159,7 +213,18 @@ export default function CreatePage() {
     }
   };
 
-  const isProcessing = ["generating", "uploading", "minting"].includes(state);
+  const getGenerateButtonText = () => {
+    switch (state) {
+      case "paying":
+        return "Confirm Payment...";
+      case "generating":
+        return "Generating...";
+      default:
+        return `Generate (${generationFee.toFixed(2)} STX)`;
+    }
+  };
+
+  const isProcessing = ["paying", "generating", "uploading", "minting"].includes(state);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
@@ -172,7 +237,7 @@ export default function CreatePage() {
         </div>
         {!isConnected && (
           <div className="rounded-lg border border-neon-orange/20 bg-neon-orange/10 px-3 py-1.5 text-xs text-neon-orange">
-            Connect wallet to mint
+            Connect wallet to generate &amp; mint
           </div>
         )}
       </header>
@@ -188,22 +253,43 @@ export default function CreatePage() {
           <div className="neon-card p-4">
             <h2 className="mb-3 text-sm font-semibold text-text-primary">1) AI Model</h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              {AI_MODELS.map((model) => (
-                <button
-                  key={model.id}
-                  onClick={() => setSelectedModel(model.id)}
-                  className={`rounded-lg border p-3 text-left transition-all ${
-                    selectedModel === model.id
-                      ? "border-neon-cyan/30 bg-neon-cyan/10"
-                      : "border-white/10 bg-bg-card hover:border-neon-purple/30"
-                  }`}
-                >
-                  <p className={`text-xs font-semibold ${selectedModel === model.id ? "text-neon-cyan" : "text-text-primary"}`}>
-                    {model.name}
-                  </p>
-                  <p className="mt-1 text-[11px] text-text-secondary">{model.provider}</p>
-                </button>
-              ))}
+              {AI_MODELS.map((model) => {
+                const available = isProviderAvailable(model.providerType);
+                return (
+                  <button
+                    key={model.id}
+                    onClick={() => available && setSelectedModel(model.id)}
+                    disabled={!available}
+                    className={`rounded-lg border p-3 text-left transition-all ${
+                      !available
+                        ? "border-white/5 bg-bg-card/50 opacity-50 cursor-not-allowed"
+                        : selectedModel === model.id
+                          ? "border-neon-cyan/30 bg-neon-cyan/10"
+                          : "border-white/10 bg-bg-card hover:border-neon-purple/30"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className={`text-xs font-semibold ${selectedModel === model.id ? "text-neon-cyan" : "text-text-primary"}`}>
+                        {model.name}
+                      </p>
+                      {model.providerType === "openai" ? (
+                        <Cloud size={12} className="text-text-muted" />
+                      ) : (
+                        <Server size={12} className="text-text-muted" />
+                      )}
+                    </div>
+                    <div className="mt-1 flex items-center justify-between">
+                      <p className="text-[11px] text-text-secondary">{model.provider}</p>
+                      <p className={`text-[11px] font-mono ${selectedModel === model.id ? "text-neon-cyan" : "text-neon-orange"}`}>
+                        {model.fee.toFixed(2)} STX
+                      </p>
+                    </div>
+                    {!available && (
+                      <p className="mt-1 text-[10px] text-neon-red">Not configured</p>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -247,15 +333,17 @@ export default function CreatePage() {
             </div>
             <button
               onClick={handleGenerate}
-              disabled={isProcessing}
+              disabled={isProcessing || !isConnected}
               className="btn-primary mt-3 inline-flex w-full items-center justify-center gap-2 text-sm disabled:opacity-50"
             >
-              {state === "generating" ? (
+              {state === "paying" ? (
+                <Wallet size={15} className="animate-pulse" />
+              ) : state === "generating" ? (
                 <Loader2 size={15} className="animate-spin" />
               ) : (
                 <Sparkles size={15} />
               )}
-              {state === "generating" ? "Generating..." : "Generate"}
+              {getGenerateButtonText()}
             </button>
           </div>
 
@@ -368,9 +456,9 @@ export default function CreatePage() {
               <p className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1">
                   <Zap size={12} className="text-neon-purple" />
-                  AI generation
+                  AI generation ({selectedModelConfig?.name ?? "DALL-E 3"})
                 </span>
-                <span className="font-mono">2.00 STX</span>
+                <span className="font-mono">{generationFee.toFixed(2)} STX</span>
               </p>
               <p className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1">
@@ -381,7 +469,7 @@ export default function CreatePage() {
               </p>
               <p className="mt-2 flex items-center justify-between border-t border-white/10 pt-2 text-text-primary">
                 <span>Total</span>
-                <span className="font-mono text-neon-cyan">2.01 STX</span>
+                <span className="font-mono text-neon-cyan">{(generationFee + 0.01).toFixed(2)} STX</span>
               </p>
             </div>
             <button
