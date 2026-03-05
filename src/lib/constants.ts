@@ -94,7 +94,7 @@ export const NAV_LINKS = [
 
 // Social Links
 export const SOCIAL_LINKS = {
-    twitter: "https://twitter.com/NeuralMint",
+    twitter: "https://x.com/mintneural92974",
     discord: "https://discord.gg/neuralmint",
     github: "https://github.com/neuralmint",
     forum: "https://forum.stacks.org",

@@ -169,9 +169,15 @@ export async function enhanceWithOpenAI(prompt: string): Promise<EnhanceResult> 
 // OpenClaw Provider (Self-hosted: Ollama + Stable Diffusion)
 // =============================================================
 
+/** Timeout for Stable Diffusion image generation (120s for large images) */
+const SD_TIMEOUT_MS = 120_000;
+/** Timeout for OpenClaw LLM calls */
+const LLM_TIMEOUT_MS = 30_000;
+
 /**
  * Generate image via Stable Diffusion WebUI API running on VPS.
  * Expects STABLE_DIFFUSION_API_URL env var (e.g. http://vps-ip:7860).
+ * Falls back to OpenClaw Gateway's /v1/ proxy if SD URL ends with the gateway port.
  */
 export async function generateWithOpenClaw(
   prompt: string,
@@ -183,6 +189,7 @@ export async function generateWithOpenClaw(
   const sdUrl = process.env.STABLE_DIFFUSION_API_URL;
 
   if (!sdUrl) {
+    console.warn("[OpenClaw] STABLE_DIFFUSION_API_URL not set, using mock");
     return {
       success: true,
       imageUrl: mockImageUrl(promptHash),
@@ -209,10 +216,12 @@ export async function generateWithOpenClaw(
         cfg_scale: 7,
         sampler_name: "DPM++ 2M Karras",
       }),
+      signal: AbortSignal.timeout(SD_TIMEOUT_MS),
     });
 
     if (!response.ok) {
-      console.error("Stable Diffusion error:", await response.text());
+      const errText = await response.text().catch(() => "unknown error");
+      console.error(`[OpenClaw] SD generation error (${response.status}):`, errText);
       return {
         success: true,
         imageUrl: mockImageUrl(promptHash),
@@ -242,7 +251,8 @@ export async function generateWithOpenClaw(
       provider: "openclaw",
     };
   } catch (err) {
-    console.error("Stable Diffusion API error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[OpenClaw] SD API error:", msg);
     return {
       success: true,
       imageUrl: mockImageUrl(promptHash),
@@ -255,29 +265,28 @@ export async function generateWithOpenClaw(
 }
 
 /**
- * Enhance prompt via OpenClaw Gateway (Ollama LLM on VPS).
- * Expects OPENCLAW_API_URL and OPENCLAW_API_TOKEN env vars.
+ * Enhance prompt via Ollama LLM running on VPS (direct, bypassing OpenClaw Gateway).
+ * Uses OPENCLAW_API_URL env var with /ollama/ proxy path.
+ * Falls back to OpenClaw Gateway /v1/ endpoint if OLLAMA_API_URL is not set.
  */
 export async function enhanceWithOpenClaw(prompt: string): Promise<EnhanceResult> {
+  const ollamaUrl = process.env.OLLAMA_API_URL;
   const openclawUrl = process.env.OPENCLAW_API_URL;
-  const openclawToken = process.env.OPENCLAW_API_TOKEN;
+  const baseUrl = ollamaUrl || (openclawUrl ? `${openclawUrl}/ollama` : null);
 
-  if (!openclawUrl || !openclawToken) {
+  if (!baseUrl) {
+    console.warn("[OpenClaw] No OLLAMA_API_URL or OPENCLAW_API_URL set, using mock");
     return { success: true, enhanced: mockEnhance(prompt), provider: "openclaw", mock: true };
   }
 
-  try {
-    const agentId = process.env.OPENCLAW_AGENT_ID || "main";
+  const ollamaModel = process.env.OLLAMA_MODEL || "deepseek-r1:1.5b";
 
-    const response = await fetch(`${openclawUrl}/v1/chat/completions`, {
+  try {
+    const response = await fetch(`${baseUrl}/api/chat`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${openclawToken}`,
-        "x-openclaw-agent-id": agentId,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: `openclaw:${agentId}`,
+        model: ollamaModel,
         messages: [
           {
             role: "system",
@@ -291,23 +300,27 @@ export async function enhanceWithOpenClaw(prompt: string): Promise<EnhanceResult
         ],
         stream: false,
       }),
+      signal: AbortSignal.timeout(LLM_TIMEOUT_MS),
     });
 
     if (!response.ok) {
-      console.error("OpenClaw enhance error:", await response.text());
+      const errText = await response.text().catch(() => "unknown error");
+      console.error(`[OpenClaw] Ollama enhance error (${response.status}):`, errText);
       return { success: true, enhanced: mockEnhance(prompt), provider: "openclaw", mock: true };
     }
 
     const data = await response.json();
-    const enhanced = data.choices?.[0]?.message?.content?.trim();
+    const enhanced = data.message?.content?.trim();
 
     if (!enhanced) {
+      console.warn("[OpenClaw] Empty Ollama response, using mock");
       return { success: true, enhanced: mockEnhance(prompt), provider: "openclaw", mock: true };
     }
 
     return { success: true, enhanced, provider: "openclaw" };
   } catch (err) {
-    console.error("OpenClaw enhance error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[OpenClaw] Ollama enhance error:", msg);
     return { success: true, enhanced: mockEnhance(prompt), provider: "openclaw", mock: true };
   }
 }

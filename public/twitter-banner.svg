@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" width="1500" height="500">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06060C"/>
+      <stop offset="40%" stop-color="#0A0A1A"/>
+      <stop offset="100%" stop-color="#0F0A1F"/>
+    </linearGradient>
+    <linearGradient id="neon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F5FF"/>
+      <stop offset="50%" stop-color="#BF00FF"/>
+      <stop offset="100%" stop-color="#FF6B00"/>
+    </linearGradient>
+    <linearGradient id="cyanPurple" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00F5FF"/>
+      <stop offset="100%" stop-color="#BF00FF"/>
+    </linearGradient>
+    <radialGradient id="glowCyan" cx="30%" cy="50%" r="40%">
+      <stop offset="0%" stop-color="#00F5FF" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#00F5FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowPurple" cx="70%" cy="40%" r="35%">
+      <stop offset="0%" stop-color="#BF00FF" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#BF00FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowOrange" cx="85%" cy="70%" r="25%">
+      <stop offset="0%" stop-color="#FF6B00" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#FF6B00" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="bigGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1500" height="500" fill="url(#bg)"/>
+  <rect width="1500" height="500" fill="url(#glowCyan)"/>
+  <rect width="1500" height="500" fill="url(#glowPurple)"/>
+  <rect width="1500" height="500" fill="url(#glowOrange)"/>
+
+  <!-- Grid pattern -->
+  <g opacity="0.04" stroke="#00F5FF" stroke-width="0.5">
+    <line x1="0" y1="100" x2="1500" y2="100"/>
+    <line x1="0" y1="200" x2="1500" y2="200"/>
+    <line x1="0" y1="300" x2="1500" y2="300"/>
+    <line x1="0" y1="400" x2="1500" y2="400"/>
+    <line x1="300" y1="0" x2="300" y2="500"/>
+    <line x1="600" y1="0" x2="600" y2="500"/>
+    <line x1="900" y1="0" x2="900" y2="500"/>
+    <line x1="1200" y1="0" x2="1200" y2="500"/>
+  </g>
+
+  <!-- Neural network decoration - left side -->
+  <g opacity="0.15">
+    <circle cx="120" cy="120" r="5" fill="#00F5FF"/>
+    <circle cx="200" cy="80" r="4" fill="#BF00FF"/>
+    <circle cx="280" cy="140" r="6" fill="#00F5FF"/>
+    <circle cx="160" cy="200" r="4" fill="#BF00FF"/>
+    <circle cx="90" cy="280" r="5" fill="#00F5FF"/>
+    <circle cx="220" cy="300" r="4" fill="#BF00FF"/>
+    <circle cx="310" cy="250" r="5" fill="#00F5FF"/>
+    <circle cx="140" cy="380" r="4" fill="#BF00FF"/>
+    <circle cx="260" cy="400" r="5" fill="#00F5FF"/>
+    <line x1="120" y1="120" x2="200" y2="80" stroke="#00F5FF" stroke-width="0.8"/>
+    <line x1="200" y1="80" x2="280" y2="140" stroke="#BF00FF" stroke-width="0.8"/>
+    <line x1="120" y1="120" x2="160" y2="200" stroke="#BF00FF" stroke-width="0.8"/>
+    <line x1="280" y1="140" x2="310" y2="250" stroke="#00F5FF" stroke-width="0.8"/>
+    <line x1="160" y1="200" x2="90" y2="280" stroke="#00F5FF" stroke-width="0.8"/>
+    <line x1="160" y1="200" x2="220" y2="300" stroke="#BF00FF" stroke-width="0.8"/>
+    <line x1="310" y1="250" x2="220" y2="300" stroke="#00F5FF" stroke-width="0.8"/>
+    <line x1="90" y1="280" x2="140" y2="380" stroke="#BF00FF" stroke-width="0.8"/>
+    <line x1="220" y1="300" x2="260" y2="400" stroke="#00F5FF" stroke-width="0.8"/>
+  </g>
+
+  <!-- Neural network decoration - right side -->
+  <g opacity="0.12">
+    <circle cx="1200" cy="100" r="4" fill="#FF6B00"/>
+    <circle cx="1300" cy="150" r="5" fill="#00F5FF"/>
+    <circle cx="1400" cy="90" r="4" fill="#BF00FF"/>
+    <circle cx="1250" cy="250" r="5" fill="#00F5FF"/>
+    <circle cx="1380" cy="280" r="4" fill="#FF6B00"/>
+    <circle cx="1180" cy="350" r="5" fill="#BF00FF"/>
+    <circle cx="1320" cy="380" r="4" fill="#00F5FF"/>
+    <circle cx="1420" cy="350" r="5" fill="#FF6B00"/>
+    <line x1="1200" y1="100" x2="1300" y2="150" stroke="#FF6B00" stroke-width="0.8"/>
+    <line x1="1300" y1="150" x2="1400" y2="90" stroke="#00F5FF" stroke-width="0.8"/>
+    <line x1="1300" y1="150" x2="1250" y2="250" stroke="#BF00FF" stroke-width="0.8"/>
+    <line x1="1250" y1="250" x2="1380" y2="280" stroke="#00F5FF" stroke-width="0.8"/>
+    <line x1="1250" y1="250" x2="1180" y2="350" stroke="#FF6B00" stroke-width="0.8"/>
+    <line x1="1380" y1="280" x2="1420" y2="350" stroke="#BF00FF" stroke-width="0.8"/>
+    <line x1="1180" y1="350" x2="1320" y2="380" stroke="#00F5FF" stroke-width="0.8"/>
+    <line x1="1320" y1="380" x2="1420" y2="350" stroke="#FF6B00" stroke-width="0.8"/>
+  </g>
+
+  <!-- Blockchain chain decoration -->
+  <g opacity="0.08">
+    <rect x="420" y="420" width="20" height="20" rx="4" stroke="#00F5FF" stroke-width="1" fill="none"/>
+    <line x1="440" y1="430" x2="470" y2="430" stroke="#00F5FF" stroke-width="1"/>
+    <rect x="470" y="420" width="20" height="20" rx="4" stroke="#BF00FF" stroke-width="1" fill="none"/>
+    <line x1="490" y1="430" x2="520" y2="430" stroke="#BF00FF" stroke-width="1"/>
+    <rect x="520" y="420" width="20" height="20" rx="4" stroke="#00F5FF" stroke-width="1" fill="none"/>
+    <line x1="540" y1="430" x2="570" y2="430" stroke="#00F5FF" stroke-width="1"/>
+    <rect x="570" y="420" width="20" height="20" rx="4" stroke="#FF6B00" stroke-width="1" fill="none"/>
+    <line x1="590" y1="430" x2="620" y2="430" stroke="#FF6B00" stroke-width="1"/>
+    <rect x="620" y="420" width="20" height="20" rx="4" stroke="#00F5FF" stroke-width="1" fill="none"/>
+  </g>
+
+  <!-- Icon: N in rounded square -->
+  <rect x="470" y="110" width="100" height="100" rx="24" fill="url(#cyanPurple)" opacity="0.12"/>
+  <rect x="470" y="110" width="100" height="100" rx="24" fill="none" stroke="url(#cyanPurple)" stroke-width="2.5" filter="url(#glow)"/>
+  <text x="520" y="183" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-size="64" font-weight="800" fill="url(#cyanPurple)" text-anchor="middle" filter="url(#glow)">N</text>
+
+  <!-- Main text: NeuralMint -->
+  <text x="750" y="290" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-size="72" font-weight="800" text-anchor="middle" letter-spacing="-2">
+    <tspan fill="#F0F0F5">Neural</tspan><tspan fill="url(#neon)">Mint</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="750" y="335" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-size="18" font-weight="400" fill="#6B7280" text-anchor="middle" letter-spacing="6">AI-POWERED NFT MARKETPLACE ON STACKS</text>
+
+  <!-- Accent line under tagline -->
+  <line x1="550" y1="360" x2="950" y2="360" stroke="url(#neon)" stroke-width="1.5" opacity="0.3"/>
+
+  <!-- Bottom badges -->
+  <g transform="translate(530, 380)">
+    <rect width="120" height="30" rx="15" fill="#00F5FF" fill-opacity="0.08" stroke="#00F5FF" stroke-width="0.8" stroke-opacity="0.3"/>
+    <text x="60" y="20" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" fill="#00F5FF" text-anchor="middle" letter-spacing="1">DALL-E 3</text>
+  </g>
+  <g transform="translate(670, 380)">
+    <rect width="160" height="30" rx="15" fill="#BF00FF" fill-opacity="0.08" stroke="#BF00FF" stroke-width="0.8" stroke-opacity="0.3"/>
+    <text x="80" y="20" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" fill="#BF00FF" text-anchor="middle" letter-spacing="1">STABLE DIFFUSION</text>
+  </g>
+  <g transform="translate(850, 380)">
+    <rect width="120" height="30" rx="15" fill="#FF6B00" fill-opacity="0.08" stroke="#FF6B00" stroke-width="0.8" stroke-opacity="0.3"/>
+    <text x="60" y="20" font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" fill="#FF6B00" text-anchor="middle" letter-spacing="1">BITCOIN</text>
+  </g>
+</svg>
