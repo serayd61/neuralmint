@@ -3,7 +3,22 @@
 // ============================================
 
 // ── Prompt Tiers ──
-export type PromptTier = "legendary" | "epic" | "rare" | "common";
+export type PromptTier = "legendary" | "epic" | "rare" | "uncommon" | "common";
+
+// ── AI Prompt Score (server-side GPT-4o-mini) ──
+export interface AIPromptScore {
+  score: number;
+  breakdown: {
+    originality: number;
+    creativity: number;
+    technical: number;
+    market: number;
+  };
+  feedback: string;
+  rarity_tier: PromptTier;
+  suggestions: string[];
+  promptHash: string;
+}
 
 // ── On-Chain Data ──
 export interface OnChainData {

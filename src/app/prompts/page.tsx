@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Sparkles, Crown, Gem, Zap, Circle } from "lucide-react";
+import { Sparkles, Crown, Gem, Zap, Circle, Shield } from "lucide-react";
 import { PROMPT_VAULT } from "@/lib/prompt-vault-data";
 import { PROMPT_TIER_CONFIG } from "@/lib/prompt-utils";
 import { FilterChip } from "@/components/shared/FilterChip";
@@ -13,6 +13,7 @@ const TIER_ICONS = {
   legendary: Crown,
   epic: Gem,
   rare: Zap,
+  uncommon: Shield,
   common: Circle,
 };
 
@@ -32,7 +33,7 @@ export default function PromptVaultPage() {
     return result.sort((a, b) => b.promptScore - a.promptScore);
   }, [filterTier, filterCategory]);
 
-  const tiers: PromptTier[] = ["legendary", "epic", "rare", "common"];
+  const tiers: PromptTier[] = ["legendary", "epic", "rare", "uncommon", "common"];
 
   const groupedByTier = useMemo(() => {
     const groups: Record<string, typeof filteredPrompts> = {};

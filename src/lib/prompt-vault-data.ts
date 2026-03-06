@@ -3,9 +3,14 @@
 // ============================================
 
 import type { PromptVaultItem } from "./types";
+import { getPromptTier } from "./prompt-utils";
+
+function item(data: Omit<PromptVaultItem, "promptTier">): PromptVaultItem {
+  return { ...data, promptTier: getPromptTier(data.promptScore) };
+}
 
 export const PROMPT_VAULT: PromptVaultItem[] = [
-  {
+  item({
     id: "vault-001",
     title: "Celestial Guardian",
     description: "An ethereal guardian entity watching over a cosmic landscape with crystalline armor.",
@@ -13,13 +18,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Fantasy",
     difficulty: "advanced",
     promptScore: 97,
-    promptTier: "legendary",
     exampleImageUrl: "https://picsum.photos/seed/vault1/600/600",
     aiModel: "dall-e-3",
     usageCount: 342,
     tags: ["celestial", "guardian", "cosmic", "ethereal", "fantasy"],
-  },
-  {
+  }),
+  item({
     id: "vault-002",
     title: "Quantum Dreamscape",
     description: "A surreal quantum physics visualization merging science and art.",
@@ -27,13 +31,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Abstract",
     difficulty: "master",
     promptScore: 96,
-    promptTier: "legendary",
     exampleImageUrl: "https://picsum.photos/seed/vault2/600/600",
     aiModel: "dall-e-3",
     usageCount: 289,
     tags: ["quantum", "surreal", "science", "abstract", "dimensions"],
-  },
-  {
+  }),
+  item({
     id: "vault-003",
     title: "Cyberpunk Ronin",
     description: "A masterless samurai in a neon-drenched futuristic Tokyo.",
@@ -41,13 +44,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Art",
     difficulty: "advanced",
     promptScore: 95,
-    promptTier: "legendary",
     exampleImageUrl: "https://picsum.photos/seed/vault3/600/600",
     aiModel: "dall-e-3",
     usageCount: 567,
     tags: ["cyberpunk", "samurai", "neon", "tokyo", "futuristic"],
-  },
-  {
+  }),
+  item({
     id: "vault-004",
     title: "Bio-Mechanical Phoenix",
     description: "A phoenix reborn from mechanical and organic fusion.",
@@ -55,13 +57,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Sci-Fi",
     difficulty: "advanced",
     promptScore: 93,
-    promptTier: "epic",
     exampleImageUrl: "https://picsum.photos/seed/vault4/600/600",
     aiModel: "dall-e-3",
     usageCount: 423,
     tags: ["phoenix", "biomechanical", "rebirth", "dark", "fusion"],
-  },
-  {
+  }),
+  item({
     id: "vault-005",
     title: "Solarpunk Oasis",
     description: "A utopian solarpunk city harmonizing technology and nature.",
@@ -69,13 +70,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Fantasy",
     difficulty: "intermediate",
     promptScore: 88,
-    promptTier: "epic",
     exampleImageUrl: "https://picsum.photos/seed/vault5/600/600",
     aiModel: "dall-e-3",
     usageCount: 198,
     tags: ["solarpunk", "utopia", "nature", "city", "green"],
-  },
-  {
+  }),
+  item({
     id: "vault-006",
     title: "Deep Ocean Oracle",
     description: "An ancient oracle dwelling in the abyssal depths.",
@@ -83,13 +83,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Fantasy",
     difficulty: "advanced",
     promptScore: 90,
-    promptTier: "epic",
     exampleImageUrl: "https://picsum.photos/seed/vault6/600/600",
     aiModel: "dall-e-3",
     usageCount: 156,
     tags: ["ocean", "deep", "oracle", "bioluminescent", "mystical"],
-  },
-  {
+  }),
+  item({
     id: "vault-007",
     title: "Neon Geisha",
     description: "A futuristic geisha with holographic elements in neo-Tokyo.",
@@ -97,13 +96,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Portrait",
     difficulty: "intermediate",
     promptScore: 87,
-    promptTier: "epic",
     exampleImageUrl: "https://picsum.photos/seed/vault7/600/600",
     aiModel: "dall-e-3",
     usageCount: 312,
     tags: ["geisha", "cyberpunk", "neon", "portrait", "japanese"],
-  },
-  {
+  }),
+  item({
     id: "vault-008",
     title: "Fractal Forest",
     description: "A mathematically perfect forest where trees grow in fractal patterns.",
@@ -111,13 +109,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Nature",
     difficulty: "intermediate",
     promptScore: 79,
-    promptTier: "rare",
     exampleImageUrl: "https://picsum.photos/seed/vault8/600/600",
     aiModel: "stable-diffusion",
     usageCount: 234,
     tags: ["fractal", "forest", "nature", "mathematical", "mystical"],
-  },
-  {
+  }),
+  item({
     id: "vault-009",
     title: "Retro Space Explorer",
     description: "A vintage space exploration scene with 1960s retrofuturism aesthetic.",
@@ -125,13 +122,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Sci-Fi",
     difficulty: "beginner",
     promptScore: 74,
-    promptTier: "rare",
     exampleImageUrl: "https://picsum.photos/seed/vault9/600/600",
     aiModel: "stable-diffusion",
     usageCount: 145,
     tags: ["retro", "space", "vintage", "explorer", "alien"],
-  },
-  {
+  }),
+  item({
     id: "vault-010",
     title: "Abstract Emotions",
     description: "Pure emotion visualized as flowing abstract forms.",
@@ -139,13 +135,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Abstract",
     difficulty: "intermediate",
     promptScore: 76,
-    promptTier: "rare",
     exampleImageUrl: "https://picsum.photos/seed/vault10/600/600",
     aiModel: "dall-e-3",
     usageCount: 178,
     tags: ["abstract", "emotion", "flowing", "colorful", "contemporary"],
-  },
-  {
+  }),
+  item({
     id: "vault-011",
     title: "Steampunk Clocktower",
     description: "A massive steampunk clocktower at the heart of an industrial city.",
@@ -153,13 +148,12 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Fantasy",
     difficulty: "advanced",
     promptScore: 86,
-    promptTier: "epic",
     exampleImageUrl: "https://picsum.photos/seed/vault11/600/600",
     aiModel: "dall-e-3",
     usageCount: 267,
     tags: ["steampunk", "clocktower", "victorian", "industrial", "brass"],
-  },
-  {
+  }),
+  item({
     id: "vault-012",
     title: "Crystal Dragon",
     description: "A dragon made entirely of living crystal, refracting light in all directions.",
@@ -167,10 +161,9 @@ export const PROMPT_VAULT: PromptVaultItem[] = [
     category: "Fantasy",
     difficulty: "advanced",
     promptScore: 91,
-    promptTier: "epic",
     exampleImageUrl: "https://picsum.photos/seed/vault12/600/600",
     aiModel: "dall-e-3",
     usageCount: 389,
     tags: ["dragon", "crystal", "fantasy", "epic", "rainbow"],
-  },
+  }),
 ];
