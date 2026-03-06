@@ -251,6 +251,7 @@ body {
   background: linear-gradient(135deg, rgba(0,229,255,0.03), transparent 50%, rgba(168,85,247,0.03));
   opacity: 0;
   transition: opacity 0.35s;
+  pointer-events: none;
 }
 .neon-card:hover {
   border-color: rgba(0,229,255,0.35);
