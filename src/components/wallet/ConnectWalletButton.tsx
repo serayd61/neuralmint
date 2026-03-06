@@ -3,7 +3,7 @@
 import { connect, disconnect, isConnected, getLocalStorage } from "@stacks/connect";
 import { useWalletStore } from "@/stores/wallet-store";
 import { truncateAddress } from "@/lib/utils";
-import { Wallet, LogOut, User, ChevronDown, X } from "lucide-react";
+import { Wallet, LogOut, User, ChevronDown, X, LayoutDashboard, Sparkles } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 const WALLETS = [
@@ -265,10 +265,28 @@ export function ConnectWalletButton() {
                     <a
                         href={`/profile/${stxAddress}`}
                         className="flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
+                        onClick={() => setDropdownOpen(false)}
                     >
                         <User size={14} />
                         My Profile
                     </a>
+                    <a
+                        href="/dashboard"
+                        className="flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
+                        onClick={() => setDropdownOpen(false)}
+                    >
+                        <LayoutDashboard size={14} />
+                        Dashboard
+                    </a>
+                    <a
+                        href="/create"
+                        className="flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
+                        onClick={() => setDropdownOpen(false)}
+                    >
+                        <Sparkles size={14} />
+                        Create NFT
+                    </a>
+                    <div className="border-t border-white/5" />
                     <button
                         onClick={handleDisconnect}
                         className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-neon-red hover:bg-bg-hover transition-colors"

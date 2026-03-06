@@ -442,9 +442,9 @@ export default function DashboardPage() {
         />
         <ActionCard
           icon={Tag}
-          title="Collections"
-          desc="View all collections"
-          href="/collections"
+          title="Prompt Vault"
+          desc="Prompt leaderboard"
+          href="/prompts"
           accent="orange"
         />
         <ActionCard
