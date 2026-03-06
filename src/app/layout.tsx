@@ -1,14 +1,30 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { APP_NAME, APP_DESCRIPTION } from "@/lib/constants";
+import { APP_NAME, APP_DESCRIPTION, APP_URL } from "@/lib/constants";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { WalletProvider } from "@/providers/WalletProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: APP_NAME,
+  title: {
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
+  },
   description: APP_DESCRIPTION,
+  metadataBase: new URL(APP_URL),
+  openGraph: {
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    siteName: APP_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
@@ -32,6 +48,18 @@ export default function RootLayout({
               <main className="flex-1 pt-[68px]">{children}</main>
               <Footer />
             </div>
+            <Toaster
+              theme="dark"
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: "rgba(13, 17, 23, 0.95)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  color: "#fff",
+                  backdropFilter: "blur(12px)",
+                },
+              }}
+            />
           </QueryProvider>
         </WalletProvider>
       </body>

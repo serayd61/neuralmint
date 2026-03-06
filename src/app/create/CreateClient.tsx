@@ -10,6 +10,7 @@ import { PromptScoreBadge } from "@/components/shared/PromptScoreBadge";
 import { PROMPT_TIER_CONFIG, getPromptTier, getSuggestedMintPrice } from "@/lib/prompt-utils";
 import { PromptBotPanel } from "@/components/prompt-bot/PromptBotPanel";
 import { RarityBadgeFromScore } from "@/components/rarity-badge";
+import { toast } from "sonner";
 import type { AIPromptScore } from "@/lib/types";
 
 const PROMPT_TEMPLATES = [
@@ -213,6 +214,7 @@ export default function CreateClient() {
       setGeneratedImage(data.imageUrl);
       setPromptHash(data.promptHash);
       setState("generated");
+      toast.success("Image generated!", { description: "Preview is ready. Mint to save on-chain." });
 
       // Add to session history
       addSessionImage({
@@ -222,7 +224,9 @@ export default function CreateClient() {
         timestamp: Date.now(),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Generation failed");
+      const msg = err instanceof Error ? err.message : "Generation failed";
+      setError(msg);
+      toast.error("Generation failed", { description: msg });
       setState("idle");
     }
   };
@@ -301,8 +305,11 @@ export default function CreateClient() {
       });
 
       setState("success");
+      toast.success("NFT minted successfully!", { description: `${nftName} is now on the blockchain.` });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Minting failed");
+      const msg = err instanceof Error ? err.message : "Minting failed";
+      setError(msg);
+      toast.error("Minting failed", { description: msg });
       setState("generated");
     }
   };

@@ -1,8 +1,10 @@
-"use client";
+import type { Metadata } from "next";
+import ExploreClient from "./ExploreClient";
 
-import dynamic from "next/dynamic";
-
-const ExploreClient = dynamic(() => import("./ExploreClient"), { ssr: false });
+export const metadata: Metadata = {
+  title: "Explore NFTs",
+  description: "Discover AI-generated NFTs scored by prompt quality on the NeuralMint marketplace. Filter by price, rarity, AI model, and more.",
+};
 
 export default function ExplorePage() {
   return <ExploreClient />;

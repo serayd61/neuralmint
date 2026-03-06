@@ -11,7 +11,10 @@
     "typecheck": "node ./node_modules/typescript/lib/tsc.js --noEmit",
     "check": "npm run scan:secrets && npm run typecheck && npm run lint && npm run build",
     "deploy:contracts:testnet": "STACKS_DEPLOY_NETWORK=testnet node ./scripts/deploy-contracts.mjs",
-    "deploy:contracts:mainnet": "STACKS_DEPLOY_NETWORK=mainnet node ./scripts/deploy-contracts.mjs"
+    "deploy:contracts:mainnet": "STACKS_DEPLOY_NETWORK=mainnet node ./scripts/deploy-contracts.mjs",
+    "remotion:studio": "remotion studio src/remotion/index.ts",
+    "remotion:render": "remotion render src/remotion/index.ts HelloWorld out/video.mp4",
+    "remotion:preview": "remotion preview src/remotion/index.ts"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.434",
@@ -31,6 +34,7 @@
     "react-dom": "19.2.3",
     "remotion": "^4.0.434",
     "socket.io-client": "^4.8.3",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.11"
   },

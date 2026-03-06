@@ -10,6 +10,7 @@ import { NFTGrid } from "./_components/NFTGrid";
 import { NFTDetailModal } from "./_components/NFTDetailModal";
 import type { ExploreFilters, NFTItem } from "@/lib/types";
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 
 const DEFAULT_FILTERS: ExploreFilters = {
@@ -166,12 +167,16 @@ export default function ExploreClient() {
   }, [filters, nfts]);
 
   const handleBuy = async (nft: NFTItem) => {
-    if (!isConnected) { alert("Please connect your wallet first"); return; }
+    if (!isConnected) { toast.error("Please connect your wallet first"); return; }
     setBuyingId(nft.id);
     try {
       const { buyItem } = await import("@/lib/contracts");
       await buyItem({ listingId: parseInt(nft.id), nftContract: `${NFT_CONTRACT_ADDRESS}.${NFT_CONTRACT_NAME}` });
-    } catch (error) { console.error("Buy failed:", error); }
+      toast.success("Purchase initiated!", { description: "Confirm the transaction in your wallet." });
+    } catch (error) {
+      console.error("Buy failed:", error);
+      toast.error("Purchase failed", { description: error instanceof Error ? error.message : "Transaction was rejected" });
+    }
     finally { setBuyingId(null); }
   };
 
