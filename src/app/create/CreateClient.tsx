@@ -2,13 +2,26 @@
 
 import { useState, useEffect, useMemo, useDeferredValue } from "react";
 import { useSearchParams } from "next/navigation";
-import { Sparkles, Wand2, ImagePlus, Zap, Coins, Loader2, Check, Wallet, Cloud, Server, RotateCcw, Bot } from "lucide-react";
+import { Sparkles, Wand2, ImagePlus, Zap, Coins, Loader2, Check, Wallet, Cloud, Server, RotateCcw, Bot, Award, ArrowUp, BookOpen } from "lucide-react";
 import { useWalletStore } from "@/stores/wallet-store";
 import { AI_MODELS } from "@/lib/constants";
 import { scorePrompt } from "@/lib/prompt-scoring";
 import { PromptScoreBadge } from "@/components/shared/PromptScoreBadge";
 import { PROMPT_TIER_CONFIG, getPromptTier, getSuggestedMintPrice } from "@/lib/prompt-utils";
 import { PromptBotPanel } from "@/components/prompt-bot/PromptBotPanel";
+import { RarityBadgeFromScore } from "@/components/rarity-badge";
+import type { AIPromptScore } from "@/lib/types";
+
+const PROMPT_TEMPLATES = [
+  { category: "Cyberpunk", prompt: "A cyberpunk hacker in a neon-lit alleyway, holographic interfaces floating around, rain reflections on wet pavement, volumetric fog, cinematic lighting, ultra-detailed, 8K, art by Syd Mead", score: 82 },
+  { category: "Abstract", prompt: "Abstract fractal landscape, infinite recursion, chromatic aberration, bioluminescent colors flowing like liquid crystal, mathematical precision meets organic chaos, octane render", score: 75 },
+  { category: "Portrait", prompt: "Ethereal portrait of a warrior queen, ornate golden crown with embedded crystals, fierce emerald eyes, subsurface scattering on skin, dramatic Rembrandt lighting, fantasy realism, masterpiece quality", score: 88 },
+  { category: "Landscape", prompt: "Alien planet horizon at twilight, twin suns setting behind crystalline mountains, bioluminescent flora in the foreground, atmosphere scattering, matte painting style, epic scale", score: 79 },
+  { category: "Pixel Art", prompt: "16-bit pixel art scene of a floating island fortress, waterfalls cascading into clouds below, tiny animated characters, retro RPG aesthetic, vibrant color palette, nostalgic gaming atmosphere", score: 71 },
+  { category: "Surreal", prompt: "Surrealist dreamscape: melting clocks draped over impossible architecture, Escher-inspired infinite staircases, fish swimming through clouds, Dali meets digital age, hyperrealistic details", score: 85 },
+  { category: "Minimalist", prompt: "Minimalist composition: single geometric form casting a long shadow across infinite white space, subtle gradient from warm gold to cool blue, zen aesthetic, negative space mastery", score: 65 },
+  { category: "Sci-Fi", prompt: "Massive space station orbiting a gas giant, ring habitation module with visible city lights, docking bay with approaching ships, lens flare from distant star, hard sci-fi aesthetic, photo-realistic", score: 83 },
+];
 
 type GenerationState = "idle" | "generating" | "generated" | "paying" | "uploading" | "minting" | "success";
 
@@ -47,6 +60,10 @@ export default function CreateClient() {
   const [sessionImages, setSessionImages] = useState<SessionImage[]>([]);
 
   const [promptBotOpen, setPromptBotOpen] = useState(false);
+  const [aiScore, setAiScore] = useState<AIPromptScore | null>(null);
+  const [isAiScoring, setIsAiScoring] = useState(false);
+  const [prevScore, setPrevScore] = useState<number | null>(null);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   // URL params from Prompt Vault
   const searchParams = useSearchParams();
@@ -106,8 +123,31 @@ export default function CreateClient() {
     return false;
   };
 
+  // AI Scoring with GPT-4o-mini
+  const handleAiScore = async () => {
+    if (!prompt.trim()) return;
+    setIsAiScoring(true);
+    try {
+      const res = await fetch("/api/v1/score-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, aiModel: selectedModel }),
+      });
+      const data = await res.json();
+      if (data.score != null) {
+        setAiScore(data);
+      }
+    } catch (err) {
+      console.error("AI Scoring failed:", err);
+    } finally {
+      setIsAiScoring(false);
+    }
+  };
+
   const handleEnhancePrompt = async () => {
     if (!prompt.trim()) return;
+    // Save current score before enhance
+    setPrevScore(aiScore?.score ?? promptScoreBreakdown.overall);
     setEnhancing(true);
     try {
       const res = await fetch("/api/v1/enhance-prompt", {
@@ -118,6 +158,21 @@ export default function CreateClient() {
       const data = await res.json();
       if (data.success && data.enhanced) {
         setPrompt(data.enhanced);
+        setAiScore(null);
+        // Auto re-score with AI after enhance
+        try {
+          setIsAiScoring(true);
+          const scoreRes = await fetch("/api/v1/score-prompt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: data.enhanced, aiModel: selectedModel }),
+          });
+          const scoreData = await scoreRes.json();
+          if (scoreData.score != null) {
+            setAiScore(scoreData);
+          }
+        } catch {}
+        finally { setIsAiScoring(false); }
       }
     } catch (err) {
       console.error("Enhance failed:", err);
@@ -219,6 +274,8 @@ export default function CreateClient() {
             provider: selectedProvider,
             promptHash,
             txId: paymentTxId,
+            prompt_score: aiScore?.score ?? promptScoreBreakdown.overall,
+            rarity_tier: aiScore?.rarity_tier ?? promptTier,
           },
         }),
       });
@@ -240,7 +297,7 @@ export default function CreateClient() {
         royaltyBps,
         aiModel: selectedModel,
         promptHash,
-        generationParams: JSON.stringify({ size, style, provider: selectedProvider, prompt: prompt.slice(0, 100) }),
+        generationParams: JSON.stringify({ size, style, provider: selectedProvider, prompt: prompt.slice(0, 100), prompt_score: aiScore?.score ?? promptScoreBreakdown.overall, rarity_tier: aiScore?.rarity_tier ?? promptTier }),
       });
 
       setState("success");
@@ -277,6 +334,13 @@ export default function CreateClient() {
             Create Your NFT
           </h1>
         </div>
+        <button
+          onClick={() => setShowTemplates(!showTemplates)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-neon-purple/30 bg-neon-purple/10 px-3 py-1.5 text-xs text-neon-purple hover:bg-neon-purple/20 transition-colors"
+        >
+          <BookOpen size={14} />
+          {showTemplates ? "Hide Templates" : "Start from Template"}
+        </button>
         {!isConnected && (
           <div className="rounded-lg border border-neon-orange/20 bg-neon-orange/10 px-3 py-1.5 text-xs text-neon-orange">
             Connect wallet to mint (generation is free!)
@@ -288,6 +352,32 @@ export default function CreateClient() {
         <div className="rounded-lg border border-neon-red/30 bg-neon-red/10 px-4 py-3 text-sm text-neon-red">
           {error}
         </div>
+      )}
+
+      {/* Prompt Templates */}
+      {showTemplates && (
+        <section className="neon-card p-4">
+          <h2 className="mb-3 text-sm font-semibold text-text-primary flex items-center gap-2">
+            <BookOpen size={14} className="text-neon-purple" />
+            Start from a Template
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {PROMPT_TEMPLATES.map((t) => (
+              <button
+                key={t.category}
+                onClick={() => { setPrompt(t.prompt); setShowTemplates(false); setAiScore(null); setPrevScore(null); }}
+                className="rounded-lg border border-white/10 bg-bg-card p-3 text-left hover:border-neon-purple/30 hover:bg-neon-purple/5 transition-all group"
+              >
+                <p className="text-xs font-semibold text-text-primary group-hover:text-neon-purple transition-colors">{t.category}</p>
+                <p className="mt-1 text-[10px] text-text-muted line-clamp-2 leading-relaxed">{t.prompt.slice(0, 80)}...</p>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <PromptScoreBadge score={t.score} size="sm" />
+                  <span className="text-[9px] text-text-muted">avg</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
       <section className="grid gap-6 lg:grid-cols-2">
@@ -365,22 +455,74 @@ export default function CreateClient() {
             />
             {/* Live Prompt Score */}
             {prompt.trim().length > 0 && (
-              <div
-                className="mt-2 flex items-center justify-between rounded-lg p-2.5"
-                style={{ background: tierConfig.bgColor, border: `1px solid ${tierConfig.borderColor}` }}
-              >
-                <div className="flex items-center gap-2">
-                  <PromptScoreBadge score={promptScoreBreakdown.overall} size="sm" showLabel />
-                  <span className="text-[10px] text-text-muted">
-                    Suggested price: <span className="font-mono text-text-secondary">{getSuggestedMintPrice(promptScoreBreakdown.overall)}+ STX</span>
-                  </span>
+              <div className="mt-2 space-y-2">
+                <div
+                  className="flex items-center justify-between rounded-lg p-2.5"
+                  style={{ background: tierConfig.bgColor, border: `1px solid ${tierConfig.borderColor}` }}
+                >
+                  <div className="flex items-center gap-2">
+                    <PromptScoreBadge score={promptScoreBreakdown.overall} size="sm" showLabel />
+                    <span className="text-[10px] text-text-muted">
+                      Suggested: <span className="font-mono text-text-secondary">{getSuggestedMintPrice(promptScoreBreakdown.overall)}+ STX</span>
+                    </span>
+                  </div>
+                  <div className="flex gap-3 text-[9px] text-text-muted">
+                    <span>S:{promptScoreBreakdown.specificity}</span>
+                    <span>T:{promptScoreBreakdown.technicalQuality}</span>
+                    <span>C:{promptScoreBreakdown.creativity}</span>
+                    <span>A:{promptScoreBreakdown.artisticDirection}</span>
+                  </div>
                 </div>
-                <div className="flex gap-3 text-[9px] text-text-muted">
-                  <span>S:{promptScoreBreakdown.specificity}</span>
-                  <span>T:{promptScoreBreakdown.technicalQuality}</span>
-                  <span>C:{promptScoreBreakdown.creativity}</span>
-                  <span>A:{promptScoreBreakdown.artisticDirection}</span>
-                </div>
+
+                {/* Enhance score comparison */}
+                {prevScore !== null && prevScore !== promptScoreBreakdown.overall && (
+                  <div className="flex items-center gap-2 rounded-lg bg-neon-green/10 border border-neon-green/20 px-3 py-2">
+                    <ArrowUp size={12} className="text-neon-green" />
+                    <span className="text-[11px] text-neon-green font-semibold">
+                      Score improved: {prevScore} → {promptScoreBreakdown.overall}
+                      {promptScoreBreakdown.overall > prevScore && ` (+${promptScoreBreakdown.overall - prevScore})`}
+                    </span>
+                  </div>
+                )}
+
+                {/* Evaluate with AI button */}
+                <button
+                  onClick={handleAiScore}
+                  disabled={isAiScoring || !prompt.trim()}
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-neon-orange/30 bg-neon-orange/10 px-3 py-2 text-[11px] text-neon-orange hover:bg-neon-orange/20 transition-colors disabled:opacity-50"
+                >
+                  {isAiScoring ? <Loader2 size={12} className="animate-spin" /> : <Award size={12} />}
+                  {isAiScoring ? "Evaluating with GPT-4o..." : "Evaluate Prompt with AI"}
+                </button>
+
+                {/* AI Score result */}
+                {aiScore && (
+                  <div className="rounded-lg border border-neon-orange/20 bg-neon-orange/5 p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Award size={14} className="text-neon-orange" />
+                        <span className="text-xs font-semibold text-text-primary">AI Score</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <PromptScoreBadge score={aiScore.score} size="md" showLabel />
+                        <RarityBadgeFromScore score={aiScore.score} size="sm" />
+                      </div>
+                    </div>
+                    {aiScore.feedback && (
+                      <p className="text-[11px] text-text-secondary leading-relaxed">{aiScore.feedback}</p>
+                    )}
+                    {aiScore.suggestions && aiScore.suggestions.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-text-muted uppercase tracking-wider font-semibold">Suggestions</p>
+                        {aiScore.suggestions.map((s, i) => (
+                          <p key={i} className="text-[10px] text-text-secondary flex gap-1.5">
+                            <span className="text-neon-cyan shrink-0">•</span> {s}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -481,6 +623,21 @@ export default function CreateClient() {
                 </div>
               )}
             </div>
+            {/* Show tier motivation after generation */}
+            {generatedImage && (
+              <div
+                className="mt-2 flex items-center justify-between rounded-lg p-2.5"
+                style={{ background: tierConfig.bgColor, border: `1px solid ${tierConfig.borderColor}` }}
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles size={14} style={{ color: tierConfig.color }} />
+                  <span className="text-xs font-semibold" style={{ color: tierConfig.color }}>
+                    This NFT is {tierConfig.label} tier!
+                  </span>
+                </div>
+                <PromptScoreBadge score={aiScore?.score ?? promptScoreBreakdown.overall} size="sm" showLabel />
+              </div>
+            )}
           </div>
 
           <div className="neon-card space-y-3 p-4">
