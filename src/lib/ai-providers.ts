@@ -169,15 +169,14 @@ export async function enhanceWithOpenAI(prompt: string): Promise<EnhanceResult> 
 // OpenClaw Provider (Self-hosted: Ollama + Stable Diffusion)
 // =============================================================
 
-/** Timeout for Stable Diffusion image generation (120s for large images) */
-const SD_TIMEOUT_MS = 120_000;
+/** Timeout for Hugging Face image generation */
+const HF_TIMEOUT_MS = 120_000;
 /** Timeout for OpenClaw LLM calls */
 const LLM_TIMEOUT_MS = 30_000;
 
 /**
- * Generate image via Stable Diffusion WebUI API running on VPS.
- * Expects STABLE_DIFFUSION_API_URL env var (e.g. http://vps-ip:7860).
- * Falls back to OpenClaw Gateway's /v1/ proxy if SD URL ends with the gateway port.
+ * Generate image via Hugging Face Inference API (Stable Diffusion XL).
+ * Requires HUGGINGFACE_API_TOKEN env var.
  */
 export async function generateWithOpenClaw(
   prompt: string,
@@ -186,10 +185,10 @@ export async function generateWithOpenClaw(
   _style: string
 ): Promise<GenerationResult> {
   const promptHash = createPromptHash(prompt);
-  const sdUrl = process.env.STABLE_DIFFUSION_API_URL;
+  const hfToken = process.env.HUGGINGFACE_API_TOKEN;
 
-  if (!sdUrl) {
-    console.warn("[OpenClaw] STABLE_DIFFUSION_API_URL not set, using mock");
+  if (!hfToken) {
+    console.warn("[OpenClaw] HUGGINGFACE_API_TOKEN not set, using mock");
     return {
       success: true,
       imageUrl: mockImageUrl(promptHash),
@@ -203,25 +202,32 @@ export async function generateWithOpenClaw(
   try {
     const [width, height] = (size || "1024x1024").split("x").map(Number);
 
-    const response = await fetch(`${sdUrl}/sdapi/v1/txt2img`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt: `${prompt}, masterpiece, best quality, highly detailed`,
-        negative_prompt:
-          "lowres, bad anatomy, bad hands, text, error, missing fingers, cropped, worst quality, low quality, jpeg artifacts, blurry",
-        width: width || 1024,
-        height: height || 1024,
-        steps: 30,
-        cfg_scale: 7,
-        sampler_name: "DPM++ 2M Karras",
-      }),
-      signal: AbortSignal.timeout(SD_TIMEOUT_MS),
-    });
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${hfToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          inputs: `${prompt}, masterpiece, best quality, highly detailed`,
+          parameters: {
+            negative_prompt:
+              "lowres, bad anatomy, bad hands, text, error, missing fingers, cropped, worst quality, low quality, jpeg artifacts, blurry",
+            width: width || 1024,
+            height: height || 1024,
+            num_inference_steps: 30,
+            guidance_scale: 7,
+          },
+        }),
+        signal: AbortSignal.timeout(HF_TIMEOUT_MS),
+      }
+    );
 
     if (!response.ok) {
       const errText = await response.text().catch(() => "unknown error");
-      console.error(`[OpenClaw] SD generation error (${response.status}):`, errText);
+      console.error(`[OpenClaw] HF generation error (${response.status}):`, errText);
       return {
         success: true,
         imageUrl: mockImageUrl(promptHash),
@@ -232,15 +238,9 @@ export async function generateWithOpenClaw(
       };
     }
 
-    const data = await response.json();
-    const base64Image = data.images?.[0];
-
-    if (!base64Image) {
-      throw new Error("No image in Stable Diffusion response");
-    }
-
-    // Return as data URI — frontend can display directly,
-    // and the upload route handles converting to IPFS later.
+    // HF Inference API returns raw image bytes
+    const arrayBuffer = await response.arrayBuffer();
+    const base64Image = Buffer.from(arrayBuffer).toString("base64");
     const imageUrl = `data:image/png;base64,${base64Image}`;
 
     return {
@@ -252,7 +252,7 @@ export async function generateWithOpenClaw(
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[OpenClaw] SD API error:", msg);
+    console.error("[OpenClaw] HF API error:", msg);
     return {
       success: true,
       imageUrl: mockImageUrl(promptHash),
