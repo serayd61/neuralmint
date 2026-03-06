@@ -3,9 +3,7 @@
 import { useState, useEffect } from "react";
 import { Sparkles, Wand2, ImagePlus, Zap, Coins, Loader2, Check, Wallet, Cloud, Server } from "lucide-react";
 import { useWalletStore } from "@/stores/wallet-store";
-import { mintNFT } from "@/lib/contracts";
 import { AI_MODELS } from "@/lib/constants";
-import { payGenerationFee } from "@/lib/fee-service";
 
 type GenerationState = "idle" | "paying" | "generating" | "generated" | "uploading" | "minting" | "success";
 
@@ -95,6 +93,7 @@ export default function CreateClient() {
     let paymentTxId: string;
 
     try {
+      const { payGenerationFee } = await import("@/lib/fee-service");
       paymentTxId = await payGenerationFee(generationFee);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payment failed");
@@ -179,6 +178,7 @@ export default function CreateClient() {
       setState("minting");
 
       // Mint NFT
+      const { mintNFT } = await import("@/lib/contracts");
       await mintNFT({
         recipient: stxAddress,
         uri: uploadData.metadataUri,
