@@ -14,6 +14,8 @@
     "deploy:contracts:mainnet": "STACKS_DEPLOY_NETWORK=mainnet node ./scripts/deploy-contracts.mjs"
   },
   "dependencies": {
+    "@remotion/cli": "^4.0.434",
+    "@remotion/player": "^4.0.434",
     "@stacks/blockchain-api-client": "^8.14.1",
     "@stacks/connect": "^8.2.5",
     "@stacks/network": "^7.3.1",
@@ -27,6 +29,7 @@
     "openai": "^6.25.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "remotion": "^4.0.434",
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.11"

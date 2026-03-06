@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Sparkles, Wand2, ImagePlus, Zap, Coins, Loader2, Check, Wallet, Cloud, Server, RotateCcw } from "lucide-react";
+import { useState, useEffect, useMemo, useDeferredValue } from "react";
+import { useSearchParams } from "next/navigation";
+import { Sparkles, Wand2, ImagePlus, Zap, Coins, Loader2, Check, Wallet, Cloud, Server, RotateCcw, Bot } from "lucide-react";
 import { useWalletStore } from "@/stores/wallet-store";
 import { AI_MODELS } from "@/lib/constants";
+import { scorePrompt } from "@/lib/prompt-scoring";
+import { PromptScoreBadge } from "@/components/shared/PromptScoreBadge";
+import { PROMPT_TIER_CONFIG, getPromptTier, getSuggestedMintPrice } from "@/lib/prompt-utils";
+import { PromptBotPanel } from "@/components/prompt-bot/PromptBotPanel";
 
 type GenerationState = "idle" | "generating" | "generated" | "paying" | "uploading" | "minting" | "success";
 
@@ -40,6 +45,28 @@ export default function CreateClient() {
   const [enhancing, setEnhancing] = useState(false);
   const [providers, setProviders] = useState<ProviderAvailability | null>(null);
   const [sessionImages, setSessionImages] = useState<SessionImage[]>([]);
+
+  const [promptBotOpen, setPromptBotOpen] = useState(false);
+
+  // URL params from Prompt Vault
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const prefilledPrompt = searchParams.get("prompt");
+    const prefilledModel = searchParams.get("model");
+    if (prefilledPrompt) setPrompt(decodeURIComponent(prefilledPrompt));
+    if (prefilledModel && AI_MODELS.some((m) => m.id === prefilledModel)) {
+      setSelectedModel(prefilledModel);
+    }
+  }, [searchParams]);
+
+  // Live prompt scoring
+  const deferredPrompt = useDeferredValue(prompt);
+  const promptScoreBreakdown = useMemo(
+    () => scorePrompt(deferredPrompt, selectedModel),
+    [deferredPrompt, selectedModel]
+  );
+  const promptTier = getPromptTier(promptScoreBreakdown.overall);
+  const tierConfig = PROMPT_TIER_CONFIG[promptTier];
 
   // Fetch available providers on mount
   useEffect(() => {
@@ -311,14 +338,23 @@ export default function CreateClient() {
           <div className="neon-card p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-text-primary">2) Prompt</h2>
-              <button
-                onClick={handleEnhancePrompt}
-                disabled={enhancing || !prompt.trim()}
-                className="inline-flex items-center gap-1 rounded-md border border-neon-purple/30 bg-neon-purple/10 px-2.5 py-1 text-[11px] text-neon-purple hover:bg-neon-purple/20 transition-colors disabled:opacity-50"
-              >
-                {enhancing ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
-                {enhancing ? "Enhancing..." : "Enhance with AI"}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPromptBotOpen(true)}
+                  className="inline-flex items-center gap-1 rounded-md border border-neon-cyan/30 bg-neon-cyan/10 px-2.5 py-1 text-[11px] text-neon-cyan hover:bg-neon-cyan/20 transition-colors"
+                >
+                  <Bot size={12} />
+                  PromptGenius
+                </button>
+                <button
+                  onClick={handleEnhancePrompt}
+                  disabled={enhancing || !prompt.trim()}
+                  className="inline-flex items-center gap-1 rounded-md border border-neon-purple/30 bg-neon-purple/10 px-2.5 py-1 text-[11px] text-neon-purple hover:bg-neon-purple/20 transition-colors disabled:opacity-50"
+                >
+                  {enhancing ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
+                  {enhancing ? "Enhancing..." : "Enhance with AI"}
+                </button>
+              </div>
             </div>
             <textarea
               rows={6}
@@ -327,6 +363,26 @@ export default function CreateClient() {
               onChange={(e) => setPrompt(e.target.value)}
               className="w-full rounded-lg border border-white/10 bg-bg-card px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:border-neon-cyan/50 focus:outline-none"
             />
+            {/* Live Prompt Score */}
+            {prompt.trim().length > 0 && (
+              <div
+                className="mt-2 flex items-center justify-between rounded-lg p-2.5"
+                style={{ background: tierConfig.bgColor, border: `1px solid ${tierConfig.borderColor}` }}
+              >
+                <div className="flex items-center gap-2">
+                  <PromptScoreBadge score={promptScoreBreakdown.overall} size="sm" showLabel />
+                  <span className="text-[10px] text-text-muted">
+                    Suggested price: <span className="font-mono text-text-secondary">{getSuggestedMintPrice(promptScoreBreakdown.overall)}+ STX</span>
+                  </span>
+                </div>
+                <div className="flex gap-3 text-[9px] text-text-muted">
+                  <span>S:{promptScoreBreakdown.specificity}</span>
+                  <span>T:{promptScoreBreakdown.technicalQuality}</span>
+                  <span>C:{promptScoreBreakdown.creativity}</span>
+                  <span>A:{promptScoreBreakdown.artisticDirection}</span>
+                </div>
+              </div>
+            )}
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <select
                 value={size}
@@ -530,6 +586,18 @@ export default function CreateClient() {
           </div>
         </div>
       </section>
+
+      {/* PromptGenius Bot Panel */}
+      {promptBotOpen && (
+        <PromptBotPanel
+          onClose={() => setPromptBotOpen(false)}
+          onApplyPrompt={(p) => {
+            setPrompt(p);
+            setPromptBotOpen(false);
+          }}
+          selectedModel={selectedModel}
+        />
+      )}
     </div>
   );
 }

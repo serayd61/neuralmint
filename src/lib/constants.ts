@@ -91,6 +91,7 @@ export const NFT_CATEGORIES = [
 // Navigation Links
 export const NAV_LINKS = [
     { href: "/explore", label: "Explore" },
+    { href: "/prompts", label: "Prompt Vault" },
     { href: "/create", label: "AI Studio" },
     { href: "/collections", label: "Collections" },
     { href: "/dashboard", label: "Dashboard" },

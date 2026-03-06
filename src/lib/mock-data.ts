@@ -20,6 +20,8 @@ export interface MockNFT {
     isAuction: boolean;
     blocksRemaining?: number;
     currentBidStx?: number;
+    prompt?: string;
+    promptScore?: number;
 }
 
 export interface MockCollection {
@@ -91,6 +93,8 @@ export const mockNFTs: MockNFT[] = [
         priceStx: 250, usdEquivalent: 375, aiModel: "dall-e-3", rarity: 92,
         likeCount: 142, isLiked: false, category: "Art", collection: "Cyber Genesis",
         isAuction: false,
+        prompt: "A cyberpunk fox shaman standing atop a neon-lit tower, volumetric lighting, rain particles, holographic runes floating in the air, futuristic Istanbul skyline in background, ultra-detailed, 8K resolution, art by Greg Rutkowski",
+        promptScore: 92,
     },
     {
         id: "2", tokenId: 2, name: "Neural Dream #042",
@@ -100,6 +104,8 @@ export const mockNFTs: MockNFT[] = [
         priceStx: 180, usdEquivalent: 270, aiModel: "stable-diffusion", rarity: 78,
         likeCount: 89, isLiked: true, category: "Abstract", collection: "Neural Dreams",
         isAuction: true, blocksRemaining: 42, currentBidStx: 195,
+        prompt: "Abstract neural network visualization, synaptic connections glowing in deep purple and cyan, data streams flowing like rivers of light, dreamy atmosphere, digital painting",
+        promptScore: 78,
     },
     {
         id: "3", tokenId: 3, name: "Bitcoin Punk #137",
@@ -109,6 +115,8 @@ export const mockNFTs: MockNFT[] = [
         priceStx: 520, usdEquivalent: 780, aiModel: "dall-e-3", rarity: 95,
         likeCount: 312, isLiked: false, category: "PFP", collection: "Bitcoin Punks AI",
         isAuction: false,
+        prompt: "A Bitcoin punk avatar with laser eyes, glitch art style, holographic skin texture, neon circuit board patterns, cyberpunk aesthetic, art deco frame, masterpiece quality, 8K, volumetric fog, art by Beeple and XCOPY",
+        promptScore: 96,
     },
     {
         id: "4", tokenId: 4, name: "Stacks Horizon",
@@ -118,6 +126,8 @@ export const mockNFTs: MockNFT[] = [
         priceStx: 75, usdEquivalent: 112, aiModel: "stable-diffusion", rarity: 45,
         likeCount: 34, isLiked: false, category: "Photography",
         isAuction: false,
+        prompt: "Beautiful sunset over mountains, orange sky, peaceful landscape",
+        promptScore: 35,
     },
     {
         id: "5", tokenId: 5, name: "Neon Samurai",
@@ -127,6 +137,8 @@ export const mockNFTs: MockNFT[] = [
         priceStx: 340, usdEquivalent: 510, aiModel: "dall-e-3", rarity: 88,
         likeCount: 256, isLiked: true, category: "Art", collection: "Neon Warriors",
         isAuction: true, blocksRemaining: 108, currentBidStx: 360,
+        prompt: "A neon samurai warrior in a rain-soaked Tokyo alley, katana glowing with plasma energy, reflections on wet pavement, cherry blossoms dissolving into data particles, cinematic lighting, cyberpunk style, ultra-detailed, dramatic composition",
+        promptScore: 89,
     },
     {
         id: "6", tokenId: 6, name: "Digital Flora #008",
@@ -136,6 +148,8 @@ export const mockNFTs: MockNFT[] = [
         priceStx: 120, usdEquivalent: 180, aiModel: "stable-diffusion", rarity: 62,
         likeCount: 78, isLiked: false, category: "Art",
         isAuction: false,
+        prompt: "Bioluminescent digital flora garden, glowing alien plants with crystalline petals, ethereal mist, fantasy botanical illustration, soft ambient lighting, watercolor mixed with digital art",
+        promptScore: 72,
     },
     {
         id: "7", tokenId: 7, name: "Quantum Ghost",
@@ -145,6 +159,8 @@ export const mockNFTs: MockNFT[] = [
         priceStx: 890, usdEquivalent: 1335, aiModel: "dall-e-3", rarity: 98,
         likeCount: 567, isLiked: false, category: "Abstract", collection: "Quantum Series",
         isAuction: false,
+        prompt: "A quantum ghost entity emerging from a collapsing wave function, made of translucent probability clouds and entangled light particles, Schrödinger's paradox visualized, cosmic void background with distant galaxies, subsurface scattering, volumetric god rays, octane render, hyperrealistic, art by Beksinski and Giger, 8K masterpiece",
+        promptScore: 97,
     },
     {
         id: "8", tokenId: 8, name: "Clarity Vision #023",
@@ -154,6 +170,8 @@ export const mockNFTs: MockNFT[] = [
         priceStx: 45, usdEquivalent: 67, aiModel: "stable-diffusion", rarity: 33,
         likeCount: 22, isLiked: false, category: "Gaming",
         isAuction: false,
+        prompt: "A futuristic gaming avatar with glowing armor, sci-fi setting, digital painting",
+        promptScore: 42,
     },
 ];
 
