@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import { Search, Bell, Menu, X, Globe, TrendingUp, TrendingDown } from "lucide-react";
 import { NAV_LINKS, LANGUAGES, APP_NAME } from "@/lib/constants";
-import { ConnectWalletButton } from "@/components/wallet/ConnectWalletButton";
 import { motion, AnimatePresence } from "framer-motion";
+
+const ConnectWalletButton = dynamic(
+  () => import("@/components/wallet/ConnectWalletButton").then((m) => m.ConnectWalletButton),
+  { ssr: false, loading: () => <div className="h-10 w-36 animate-pulse rounded-lg bg-white/5" /> }
+);
 
 export function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);

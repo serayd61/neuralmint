@@ -1,7 +1,6 @@
 "use client";
 
-import { isConnected, getLocalStorage } from "@stacks/connect";
-import { createContext, useContext, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useCallback, useState, type ReactNode } from "react";
 import { useWalletStore } from "@/stores/wallet-store";
 
 interface WalletContextType {
@@ -18,34 +17,47 @@ export function useWalletContext() {
 
 export function WalletProvider({ children }: { children: ReactNode }) {
     const { setWalletConnected, setDisconnected, network } = useWalletStore();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const checkConnection = useCallback(() => {
+        if (typeof window === "undefined") return;
         try {
-            const connected = isConnected();
-            if (connected) {
-                const storage = getLocalStorage();
-                const addresses = storage?.addresses;
-                if (addresses?.stx && addresses.stx.length > 0) {
-                    const stxAddresses = addresses.stx;
-                    const address = stxAddresses.find(a => 
-                        network === "mainnet" ? a.address.startsWith("SP") : a.address.startsWith("ST")
-                    )?.address;
-                    if (address) {
-                        setWalletConnected(address);
-                        return;
+            // Dynamic import to prevent SSR issues with @stacks/connect
+            import("@stacks/connect").then(({ isConnected, getLocalStorage }) => {
+                const connected = isConnected();
+                if (connected) {
+                    const storage = getLocalStorage();
+                    const addresses = storage?.addresses;
+                    if (addresses?.stx && addresses.stx.length > 0) {
+                        const stxAddresses = addresses.stx;
+                        const address = stxAddresses.find(a =>
+                            network === "mainnet" ? a.address.startsWith("SP") : a.address.startsWith("ST")
+                        )?.address;
+                        if (address) {
+                            setWalletConnected(address);
+                            return;
+                        }
                     }
                 }
-            }
-            setDisconnected();
+                setDisconnected();
+            }).catch(() => {
+                setDisconnected();
+            });
         } catch {
             setDisconnected();
         }
     }, [network, setWalletConnected, setDisconnected]);
 
-    // Restore session on mount
+    // Restore session on mount (client-side only)
     useEffect(() => {
-        checkConnection();
-    }, [checkConnection]);
+        if (mounted) {
+            checkConnection();
+        }
+    }, [mounted, checkConnection]);
 
     return (
         <WalletContext.Provider value={{ checkConnection }}>
