@@ -7,10 +7,13 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "picsum.photos",
-      },
+      { protocol: "https", hostname: "picsum.photos" },
+      { protocol: "https", hostname: "gateway.pinata.cloud" },
+      { protocol: "https", hostname: "cloudflare-ipfs.com" },
+      { protocol: "https", hostname: "ipfs.io" },
+      { protocol: "https", hostname: "dweb.link" },
+      { protocol: "https", hostname: "w3s.link" },
+      { protocol: "https", hostname: "nftstorage.link" },
     ],
   },
   async headers() {

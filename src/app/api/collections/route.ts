@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
-import { fetchAllCollectionsStats, fetchSTXPrice } from "@/lib/blockchain-service";
+import { fetchNeuralMintStats, fetchSTXPrice } from "@/lib/blockchain-service";
 
 export async function GET() {
   try {
-    const [collections, stxPrice] = await Promise.all([
-      fetchAllCollectionsStats(),
+    const [collection, stxPrice] = await Promise.all([
+      fetchNeuralMintStats(),
       fetchSTXPrice(),
     ]);
 
     return NextResponse.json({
-      collections,
+      collections: [collection],
       stxPrice,
-      totalCollections: collections.length,
+      totalCollections: 1,
     });
   } catch (error) {
     console.error("Collections API error:", error);

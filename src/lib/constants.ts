@@ -28,14 +28,18 @@ export const LAZY_MINT_CONTRACT_NAME = process.env.NEXT_PUBLIC_LAZY_MINT_CONTRAC
 export const AUCTION_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_AUCTION_CONTRACT_ADDRESS || DEPLOYER_ADDRESS;
 export const AUCTION_CONTRACT_NAME = process.env.NEXT_PUBLIC_AUCTION_CONTRACT_NAME || "neuralmint-auction";
 
-// Deployed NFT Collections
-export const NFT_COLLECTIONS = [
-  { address: DEPLOYER_ADDRESS, name: "neuralmint-cyber-genesis", symbol: "CYBER", maxSupply: 1000 },
-  { address: DEPLOYER_ADDRESS, name: "neuralmint-neural-dreams", symbol: "DREAM", maxSupply: 500 },
-  { address: DEPLOYER_ADDRESS, name: "neuralmint-bitcoin-punks", symbol: "BPUNK", maxSupply: 2100 },
-  { address: DEPLOYER_ADDRESS, name: "neuralmint-stacks-horizon", symbol: "HORZ", maxSupply: 750 },
-  { address: DEPLOYER_ADDRESS, name: "neuralmint-neon-samurai", symbol: "NEON", maxSupply: 888 },
-] as const;
+// The deployed NeuralMint NFT collection
+export const NEURALMINT_COLLECTION = {
+  address: NFT_CONTRACT_ADDRESS,
+  name: NFT_CONTRACT_NAME,
+  displayName: "NeuralMint",
+  symbol: "NMNT",
+  contractId: `${NFT_CONTRACT_ADDRESS}.${NFT_CONTRACT_NAME}`,
+} as const;
+
+// IPFS Gateways
+export const PINATA_GATEWAY = "https://gateway.pinata.cloud/ipfs";
+export const IPFS_FALLBACK_GATEWAY = "https://ipfs.io/ipfs";
 
 // Platform
 export const PLATFORM_FEE_BPS = 100; // 1%

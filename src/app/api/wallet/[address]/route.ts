@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { 
-  fetchWalletBalance, 
-  fetchOwnedNFTs, 
-  fetchRecentTransactions 
+import {
+  fetchWalletBalance,
+  fetchOwnedNFTs,
+  fetchRecentActivity,
 } from "@/lib/blockchain-service";
 
 export async function GET(
@@ -10,16 +10,16 @@ export async function GET(
   { params }: { params: Promise<{ address: string }> }
 ) {
   const { address } = await params;
-  
+
   if (!address || !address.startsWith("SP")) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   }
 
   try {
-    const [balance, nfts, transactions] = await Promise.all([
+    const [balance, nfts, activity] = await Promise.all([
       fetchWalletBalance(address),
       fetchOwnedNFTs(address),
-      fetchRecentTransactions(address, 5),
+      fetchRecentActivity(address, 15),
     ]);
 
     return NextResponse.json({
@@ -27,7 +27,7 @@ export async function GET(
       balance,
       nfts,
       nftCount: nfts.length,
-      recentTransactions: transactions.slice(0, 5),
+      recentActivity: activity,
     });
   } catch (error) {
     console.error("Wallet API error:", error);

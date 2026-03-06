@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
-import { DEPLOYED_COLLECTIONS } from "@/lib/blockchain-service";
+import { NEURALMINT_COLLECTION } from "@/lib/constants";
 
 interface CollectionData {
   contractId: string;
@@ -89,7 +89,7 @@ export default function CollectionsPage() {
       {/* Collections Grid */}
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {collections.map((collection, index) => {
-          const collectionInfo = DEPLOYED_COLLECTIONS.find(c => c.contractId === collection.contractId);
+          const collectionInfo = collection.contractId === NEURALMINT_COLLECTION.contractId ? NEURALMINT_COLLECTION : null;
           const progress = (collection.totalMinted / collection.maxSupply) * 100;
           
           return (
@@ -102,7 +102,7 @@ export default function CollectionsPage() {
               <div className="relative h-32 overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`${collectionInfo?.imageBase || "https://picsum.photos/seed/col"}${index}/800/300`}
+                  src={`${(collectionInfo as any)?.imageBase || "https://picsum.photos/seed/col"}${index}/800/300`}
                   alt={collection.name}
                   className="h-full w-full object-cover transition-transform group-hover:scale-105"
                 />
@@ -118,7 +118,7 @@ export default function CollectionsPage() {
               <div className="p-4">
                 <h3 className="text-lg font-semibold text-text-primary">{collection.name}</h3>
                 <p className="mt-1 text-xs text-text-muted">
-                  {collectionInfo?.description || "AI-generated NFT collection"}
+                  {(collectionInfo as any)?.description || "AI-generated NFT collection"}
                 </p>
 
                 {/* Progress Bar */}

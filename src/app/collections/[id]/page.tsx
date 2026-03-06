@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatNumber } from "@/lib/utils";
 import { Share2, MoreHorizontal, Loader2 } from "lucide-react";
-import { DEPLOYED_COLLECTIONS } from "@/lib/blockchain-service";
+import { NEURALMINT_COLLECTION } from "@/lib/constants";
 import { useWalletStore } from "@/stores/wallet-store";
 import { openContractCall } from "@stacks/connect";
 import { principalCV, PostConditionMode } from "@stacks/transactions";
@@ -29,10 +29,10 @@ export default function CollectionDetailPage() {
   const [minting, setMinting] = useState(false);
   const [mintSuccess, setMintSuccess] = useState(false);
 
-  const collectionInfo = DEPLOYED_COLLECTIONS.find(
-    c => c.name.toLowerCase().includes(collectionId.toLowerCase()) || 
-         c.symbol?.toLowerCase() === collectionId.toLowerCase()
-  );
+  const collectionInfo = (
+    NEURALMINT_COLLECTION.name.toLowerCase().includes(collectionId.toLowerCase()) ||
+    NEURALMINT_COLLECTION.symbol?.toLowerCase() === collectionId.toLowerCase()
+  ) ? NEURALMINT_COLLECTION : null;
 
   useEffect(() => {
     async function fetchCollection() {
@@ -109,7 +109,7 @@ export default function CollectionDetailPage() {
     name: collectionInfo?.name || "Unknown Collection",
     symbol: collectionInfo?.symbol || "???",
     totalMinted: 0,
-    maxSupply: collectionInfo?.maxSupply || 1000,
+    maxSupply: (collectionInfo as any)?.maxSupply || 1000,
     floorPrice: 25,
     volume: 0,
   };
@@ -123,7 +123,7 @@ export default function CollectionDetailPage() {
         <div className="relative h-48 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={`${collectionInfo?.imageBase || "https://picsum.photos/seed/col"}/1200/400`}
+            src={`${(collectionInfo as any)?.imageBase || "https://picsum.photos/seed/col"}/1200/400`}
             alt={displayCollection.name}
             className="h-full w-full object-cover"
           />
@@ -154,7 +154,7 @@ export default function CollectionDetailPage() {
           </div>
           
           <p className="mt-4 text-sm text-text-secondary max-w-2xl">
-            {collectionInfo?.description || "A unique collection of AI-generated NFTs on Stacks, secured by Bitcoin."}
+            {(collectionInfo as any)?.description || "A unique collection of AI-generated NFTs on Stacks, secured by Bitcoin."}
           </p>
 
           <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -265,7 +265,7 @@ export default function CollectionDetailPage() {
               <div key={i} className="overflow-hidden rounded-lg border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`${collectionInfo?.imageBase || "https://picsum.photos/seed/nft"}${i}/400/400`}
+                  src={`${(collectionInfo as any)?.imageBase || "https://picsum.photos/seed/nft"}${i}/400/400`}
                   alt={`Preview ${i}`}
                   className="h-32 w-full object-cover"
                 />

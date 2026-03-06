@@ -2,60 +2,31 @@
 // NeuralMint — Real Blockchain Data Service
 // ============================================
 
-const HIRO_API = "https://api.mainnet.hiro.so";
-const OWNER_ADDRESS = "SP2MEAT2GYJF0EXPQKH7A9S3KTNG36RYZAMA74VGJ";
+import {
+  NFT_CONTRACT_ADDRESS,
+  NFT_CONTRACT_NAME,
+  STACKS_API_URL,
+  NEURALMINT_COLLECTION,
+} from "./constants";
+import { resolveIpfsUrl, fetchIpfsMetadata, type SIP16Metadata } from "./ipfs";
 
-// Our deployed NFT collections
-export const DEPLOYED_COLLECTIONS = [
-  {
-    contractId: `${OWNER_ADDRESS}.neuralmint-cyber-genesis`,
-    name: "Cyber Genesis",
-    symbol: "CYBER",
-    maxSupply: 1000,
-    description: "AI-generated cyberpunk artworks",
-    imageBase: "https://picsum.photos/seed/cyber",
-  },
-  {
-    contractId: `${OWNER_ADDRESS}.neuralmint-neural-dreams`,
-    name: "Neural Dreams",
-    symbol: "DREAM",
-    maxSupply: 500,
-    description: "Dreamlike AI compositions",
-    imageBase: "https://picsum.photos/seed/dream",
-  },
-  {
-    contractId: `${OWNER_ADDRESS}.neuralmint-bitcoin-punks`,
-    name: "Bitcoin Punks",
-    symbol: "BPUNK",
-    maxSupply: 2100,
-    description: "Bitcoin-inspired punk avatars",
-    imageBase: "https://picsum.photos/seed/punk",
-  },
-  {
-    contractId: `${OWNER_ADDRESS}.neuralmint-stacks-horizon`,
-    name: "Stacks Horizon",
-    symbol: "HORZ",
-    maxSupply: 750,
-    description: "Horizon landscapes on Stacks",
-    imageBase: "https://picsum.photos/seed/horizon",
-  },
-  {
-    contractId: `${OWNER_ADDRESS}.neuralmint-neon-samurai`,
-    name: "Neon Samurai",
-    symbol: "NEON",
-    maxSupply: 888,
-    description: "Neon-lit samurai warriors",
-    imageBase: "https://picsum.photos/seed/samurai",
-  },
-];
+const HIRO_API = STACKS_API_URL;
+const CONTRACT_ID = NEURALMINT_COLLECTION.contractId;
+
+// ── Interfaces ──────────────────────────────────────────
 
 export interface NFTAsset {
   contractId: string;
   tokenId: number;
   name: string;
+  description: string;
   collection: string;
   imageUrl: string;
   owner: string;
+  attributes: Array<{ trait_type: string; value: string }>;
+  aiModel: string;
+  isNeuralMint: boolean;
+  metadata: SIP16Metadata | null;
 }
 
 export interface WalletBalance {
@@ -68,50 +39,143 @@ export interface CollectionStats {
   name: string;
   symbol: string;
   totalMinted: number;
-  maxSupply: number;
   floorPrice: number;
   volume: number;
 }
 
-// Fetch real STX price from multiple sources
+export interface ActivityEvent {
+  txId: string;
+  type: "mint" | "transfer" | "fee" | "contract-call";
+  timestamp: string;
+  blockHeight: number;
+  tokenId?: number;
+  from?: string;
+  to?: string;
+  amount?: number;
+  functionName?: string;
+  status: string;
+}
+
+// ── Clarity Hex Parsing ─────────────────────────────────
+
+/**
+ * Parse Clarity (ok (some "string-ascii")) response.
+ * Format: 07 (ok) + 0a (some) + 0d (string-ascii) + 4-byte length + ASCII bytes
+ */
+function parseClarityStringResponse(hexValue: string): string | null {
+  if (!hexValue?.startsWith("0x")) return null;
+  try {
+    const hex = hexValue.slice(2);
+    // 07=ok, 0a=some, 0d=string-ascii
+    if (!hex.startsWith("070a0d")) return null;
+    const lengthHex = hex.slice(6, 14);
+    const length = parseInt(lengthHex, 16);
+    const strHex = hex.slice(14, 14 + length * 2);
+    const bytes = new Uint8Array(strHex.match(/.{2}/g)!.map((b) => parseInt(b, 16)));
+    return new TextDecoder().decode(bytes);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Parse Clarity (ok uint) response.
+ * Format: 07 (ok) + 01 (uint) + 16 bytes big-endian value
+ */
+function parseClarityUint(hexValue: string): number {
+  if (!hexValue?.startsWith("0x")) return 0;
+  try {
+    const hex = hexValue.slice(2);
+    if (hex.startsWith("0701")) {
+      return parseInt(hex.slice(4), 16);
+    }
+    if (hex.startsWith("01")) {
+      return parseInt(hex.slice(2), 16);
+    }
+    return 0;
+  } catch {
+    return 0;
+  }
+}
+
+// ── Contract Read-Only Calls ────────────────────────────
+
+/** Fetch token URI from the NFT contract */
+export async function fetchTokenUri(tokenId: number): Promise<string | null> {
+  try {
+    const hexTokenId = "01" + tokenId.toString(16).padStart(32, "0");
+    const res = await fetch(
+      `${HIRO_API}/v2/contracts/call-read/${NFT_CONTRACT_ADDRESS}/${NFT_CONTRACT_NAME}/get-token-uri`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sender: NFT_CONTRACT_ADDRESS,
+          arguments: [`0x${hexTokenId}`],
+        }),
+        next: { revalidate: 300 },
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return parseClarityStringResponse(data.result);
+  } catch {
+    return null;
+  }
+}
+
+/** Fetch the last minted token ID (total minted count) */
+export async function fetchLastTokenId(): Promise<number> {
+  try {
+    const res = await fetch(
+      `${HIRO_API}/v2/contracts/call-read/${NFT_CONTRACT_ADDRESS}/${NFT_CONTRACT_NAME}/get-last-token-id`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sender: NFT_CONTRACT_ADDRESS,
+          arguments: [],
+        }),
+        next: { revalidate: 60 },
+      }
+    );
+    if (!res.ok) return 0;
+    const data = await res.json();
+    return parseClarityUint(data.result);
+  } catch {
+    return 0;
+  }
+}
+
+// ── STX Price ───────────────────────────────────────────
+
 export async function fetchSTXPrice(): Promise<number> {
   try {
-    // Try CoinGecko first
     const cgRes = await fetch(
       "https://api.coingecko.com/api/v3/simple/price?ids=blockstack&vs_currencies=usd",
       { next: { revalidate: 60 } }
     );
     if (cgRes.ok) {
       const data = await cgRes.json();
-      if (data.blockstack?.usd) {
-        return data.blockstack.usd;
-      }
+      if (data.blockstack?.usd) return data.blockstack.usd;
     }
-  } catch (e) {
-    console.error("CoinGecko price fetch failed:", e);
-  }
+  } catch {}
 
-  // Fallback to ALEX API
   try {
-    const alexRes = await fetch(
-      "https://api.alexgo.io/v1/price/STX",
-      { next: { revalidate: 60 } }
-    );
+    const alexRes = await fetch("https://api.alexgo.io/v1/price/STX", {
+      next: { revalidate: 60 },
+    });
     if (alexRes.ok) {
       const data = await alexRes.json();
-      if (data.price) {
-        return parseFloat(data.price);
-      }
+      if (data.price) return parseFloat(data.price);
     }
-  } catch (e) {
-    console.error("ALEX price fetch failed:", e);
-  }
+  } catch {}
 
-  // Default fallback
-  return 1.50;
+  return 1.5;
 }
 
-// Fetch wallet STX balance
+// ── Wallet Balance ──────────────────────────────────────
+
 export async function fetchWalletBalance(address: string): Promise<WalletBalance> {
   try {
     const res = await fetch(
@@ -122,193 +186,178 @@ export async function fetchWalletBalance(address: string): Promise<WalletBalance
       const data = await res.json();
       const stxBalance = parseInt(data.stx?.balance || "0") / 1_000_000;
       const stxPrice = await fetchSTXPrice();
-      return {
-        stx: stxBalance,
-        stxUsd: stxBalance * stxPrice,
-      };
+      return { stx: stxBalance, stxUsd: stxBalance * stxPrice };
     }
-  } catch (e) {
-    console.error("Balance fetch failed:", e);
-  }
+  } catch {}
   return { stx: 0, stxUsd: 0 };
 }
 
-// Fetch NFTs owned by address
+// ── Owned NFTs with IPFS Metadata ───────────────────────
+
 export async function fetchOwnedNFTs(address: string): Promise<NFTAsset[]> {
-  const nfts: NFTAsset[] = [];
-  
   try {
     const res = await fetch(
       `${HIRO_API}/extended/v1/tokens/nft/holdings?principal=${address}&limit=50`,
       { next: { revalidate: 60 } }
     );
-    
-    if (res.ok) {
-      const data = await res.json();
-      const results = data.results || [];
-      
-      for (const item of results) {
-        const contractId = item.asset_identifier?.split("::")[0];
-        const tokenId = parseInt(item.value?.repr?.replace("u", "") || "0");
-        
-        // Find collection info
-        const collection = DEPLOYED_COLLECTIONS.find(c => c.contractId === contractId);
-        
-        if (collection) {
-          nfts.push({
-            contractId,
-            tokenId,
-            name: `${collection.name} #${tokenId.toString().padStart(3, "0")}`,
-            collection: collection.name,
-            imageUrl: `${collection.imageBase}${tokenId}/400/400`,
-            owner: address,
-          });
-        } else {
-          // External NFT
-          const contractName = contractId?.split(".")[1] || "Unknown";
-          nfts.push({
-            contractId: contractId || "",
-            tokenId,
-            name: `${contractName} #${tokenId}`,
-            collection: contractName,
-            imageUrl: `https://picsum.photos/seed/${contractId}${tokenId}/400/400`,
-            owner: address,
-          });
-        }
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const results = data.results || [];
+
+    const promises = results.map(async (item: any): Promise<NFTAsset | null> => {
+      const assetIdentifier = item.asset_identifier || "";
+      const contractId = assetIdentifier.split("::")[0];
+      const tokenId = parseInt(item.value?.repr?.replace("u", "") || "0");
+      const isNeuralMint = contractId === CONTRACT_ID;
+
+      if (isNeuralMint) {
+        // Fetch real IPFS metadata
+        const tokenUri = await fetchTokenUri(tokenId);
+        const metadata = tokenUri ? await fetchIpfsMetadata(tokenUri) : null;
+        const aiModel =
+          metadata?.attributes?.find((a) => a.trait_type === "AI Model")?.value ||
+          (metadata?.properties?.aiModel as string) ||
+          "";
+
+        return {
+          contractId,
+          tokenId,
+          name: metadata?.name || `NeuralMint #${tokenId}`,
+          description: metadata?.description || "",
+          collection: "NeuralMint",
+          imageUrl: metadata?.image || "",
+          owner: address,
+          attributes: metadata?.attributes || [],
+          aiModel,
+          isNeuralMint: true,
+          metadata,
+        };
+      } else {
+        // External NFT — no IPFS resolution
+        const contractName = contractId?.split(".")[1] || "Unknown";
+        return {
+          contractId: contractId || "",
+          tokenId,
+          name: `${contractName} #${tokenId}`,
+          description: "",
+          collection: contractName,
+          imageUrl: "",
+          owner: address,
+          attributes: [],
+          aiModel: "",
+          isNeuralMint: false,
+          metadata: null,
+        };
       }
-    }
+    });
+
+    const settled = await Promise.allSettled(promises);
+    return settled
+      .filter((r): r is PromiseFulfilledResult<NFTAsset> => r.status === "fulfilled" && r.value !== null)
+      .map((r) => r.value);
   } catch (e) {
     console.error("NFT fetch failed:", e);
-  }
-  
-  return nfts;
-}
-
-// Parse Clarity hex value to number
-function parseClarityUint(hexValue: string): number {
-  if (!hexValue || !hexValue.startsWith("0x")) return 0;
-  
-  // Clarity uint format: 0x01 (type) + 16 bytes (value)
-  // For (ok uint): 0x07 (response ok) + 0x01 (uint type) + 16 bytes
-  try {
-    const hex = hexValue.slice(2);
-    
-    // Check if it's a response (ok uint)
-    if (hex.startsWith("0701")) {
-      // Skip response ok (07) and uint type (01), get last 16 bytes
-      const valueHex = hex.slice(4);
-      return parseInt(valueHex, 16);
-    }
-    
-    // Direct uint
-    if (hex.startsWith("01")) {
-      const valueHex = hex.slice(2);
-      return parseInt(valueHex, 16);
-    }
-    
-    return 0;
-  } catch {
-    return 0;
+    return [];
   }
 }
 
-// Fetch collection stats from contract
-export async function fetchCollectionStats(contractId: string): Promise<CollectionStats | null> {
-  const collection = DEPLOYED_COLLECTIONS.find(c => c.contractId === contractId);
-  if (!collection) return null;
+// ── Collection Stats ────────────────────────────────────
 
-  try {
-    const [address, name] = contractId.split(".");
-    const res = await fetch(
-      `${HIRO_API}/v2/contracts/call-read/${address}/${name}/get-last-token-id`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sender: address,
-          arguments: [],
-        }),
-        next: { revalidate: 60 },
-      }
-    );
-
-    if (res.ok) {
-      const data = await res.json();
-      const totalMinted = parseClarityUint(data.result);
-      
-      return {
-        contractId,
-        name: collection.name,
-        symbol: collection.symbol,
-        totalMinted,
-        maxSupply: collection.maxSupply,
-        floorPrice: totalMinted > 0 ? 25 : 0,
-        volume: totalMinted > 0 ? totalMinted * 25 : 0,
-      };
-    }
-  } catch (e) {
-    console.error("Collection stats fetch failed:", e);
-  }
-
+export async function fetchNeuralMintStats(): Promise<CollectionStats> {
+  const totalMinted = await fetchLastTokenId();
   return {
-    contractId,
-    name: collection.name,
-    symbol: collection.symbol,
-    totalMinted: 0,
-    maxSupply: collection.maxSupply,
+    contractId: CONTRACT_ID,
+    name: NEURALMINT_COLLECTION.displayName,
+    symbol: NEURALMINT_COLLECTION.symbol,
+    totalMinted,
     floorPrice: 0,
     volume: 0,
   };
 }
 
-// Fetch all collections stats
-export async function fetchAllCollectionsStats(): Promise<CollectionStats[]> {
-  const stats: CollectionStats[] = [];
-  
-  for (const collection of DEPLOYED_COLLECTIONS) {
-    const stat = await fetchCollectionStats(collection.contractId);
-    if (stat) stats.push(stat);
-  }
-  
-  return stats;
-}
+// ── Recent Activity ─────────────────────────────────────
 
-// Fetch recent transactions for address
-export async function fetchRecentTransactions(address: string, limit = 10) {
+export async function fetchRecentActivity(address: string, limit = 10): Promise<ActivityEvent[]> {
   try {
     const res = await fetch(
       `${HIRO_API}/extended/v1/address/${address}/transactions?limit=${limit}`,
       { next: { revalidate: 30 } }
     );
-    
-    if (res.ok) {
-      const data = await res.json();
-      return data.results || [];
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const events: ActivityEvent[] = [];
+
+    for (const tx of data.results || []) {
+      const base = {
+        txId: tx.tx_id,
+        timestamp: tx.burn_block_time_iso || tx.block_time_iso || "",
+        blockHeight: tx.block_height || 0,
+        status: tx.tx_status || "pending",
+      };
+
+      if (tx.tx_type === "contract_call") {
+        const cc = tx.contract_call || {};
+        const fnName = cc.function_name || "";
+        const isNeuralMint = (cc.contract_id || "").includes(NFT_CONTRACT_NAME);
+
+        if (fnName === "mint" && isNeuralMint) {
+          // Extract token ID from events
+          const nftEvent = (tx.events || []).find(
+            (e: any) => e.event_type === "non_fungible_token_asset"
+          );
+          const tokenId = nftEvent
+            ? parseInt(nftEvent.asset?.value?.repr?.replace("u", "") || "0")
+            : undefined;
+
+          events.push({
+            ...base,
+            type: "mint",
+            tokenId,
+            to: tx.sender_address,
+            functionName: fnName,
+          });
+        } else {
+          events.push({
+            ...base,
+            type: "contract-call",
+            functionName: fnName,
+            from: tx.sender_address,
+          });
+        }
+      } else if (tx.tx_type === "token_transfer") {
+        const tt = tx.token_transfer || {};
+        events.push({
+          ...base,
+          type: tt.memo?.includes?.("Generation Fee") ? "fee" : "transfer",
+          from: tx.sender_address,
+          to: tt.recipient_address,
+          amount: parseInt(tt.amount || "0") / 1_000_000,
+        });
+      }
     }
+
+    return events;
   } catch (e) {
-    console.error("Transactions fetch failed:", e);
+    console.error("Activity fetch failed:", e);
+    return [];
   }
-  return [];
 }
 
-// Platform-wide stats
+// ── Platform Stats ──────────────────────────────────────
+
 export async function fetchPlatformStats() {
   const stxPrice = await fetchSTXPrice();
-  const collections = await fetchAllCollectionsStats();
-  
-  const totalMinted = collections.reduce((sum, c) => sum + c.totalMinted, 0);
-  const totalVolume = collections.reduce((sum, c) => sum + c.volume, 0);
-  const avgFloor = collections.length > 0 
-    ? collections.reduce((sum, c) => sum + c.floorPrice, 0) / collections.length 
-    : 0;
+  const collection = await fetchNeuralMintStats();
 
   return {
     stxPrice,
-    totalMinted,
-    totalVolume,
-    totalVolumeUsd: totalVolume * stxPrice,
-    avgFloorPrice: avgFloor,
-    collectionsCount: collections.length,
-    collections,
+    totalMinted: collection.totalMinted,
+    totalVolume: collection.volume,
+    totalVolumeUsd: collection.volume * stxPrice,
+    avgFloorPrice: collection.floorPrice,
+    collectionsCount: 1,
+    collections: [collection],
   };
 }
