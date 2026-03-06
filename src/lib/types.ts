@@ -29,7 +29,7 @@ export interface OnChainData {
   mintedAt: string;
 }
 
-// ── NFT Item (extends MockNFT with prompt scoring) ──
+// ── NFT Item (primary NFT type used across the app) ──
 export interface NFTItem {
   id: string;
   tokenId: number;

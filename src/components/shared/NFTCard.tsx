@@ -1,15 +1,16 @@
 "use client";
 
 import { useRef, useCallback, useState } from "react";
-import { Heart, Gavel, ShoppingCart, Loader2 } from "lucide-react";
+import { Heart, Gavel, ShoppingCart, Loader2, ExternalLink } from "lucide-react";
 import { PromptScoreBadge } from "./PromptScoreBadge";
 import { AIModelBadge } from "./AIModelBadge";
-import type { MockNFT } from "@/lib/mock-data";
+import type { NFTItem } from "@/lib/types";
+import Link from "next/link";
 
 interface NFTCardProps {
-  nft: MockNFT;
-  onBuy?: (nft: MockNFT) => void;
-  onSelect?: (nft: MockNFT) => void;
+  nft: NFTItem;
+  onBuy?: (nft: NFTItem) => void;
+  onSelect?: (nft: NFTItem) => void;
   buying?: boolean;
 }
 
@@ -104,6 +105,16 @@ export function NFTCard({ nft, onBuy, onSelect, buying }: NFTCardProps) {
           </div>
         </div>
         <div className="flex gap-2 pt-1">
+          <Link
+            href={`/nft/${nft.tokenId}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex-1 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[11px] text-text-secondary hover:text-neon-cyan hover:border-neon-cyan/30 transition-colors text-center"
+          >
+            <span className="inline-flex items-center justify-center gap-1">
+              <ExternalLink size={11} />
+              Details
+            </span>
+          </Link>
           {nft.isAuction ? (
             <button
               onClick={(e) => { e.stopPropagation(); }}

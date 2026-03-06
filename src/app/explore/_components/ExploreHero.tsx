@@ -6,11 +6,11 @@ import { ChevronLeft, ChevronRight, Sparkles, TrendingUp, Users, Layers } from "
 import { TiltCard3D } from "@/components/shared/TiltCard3D";
 import { PromptScoreBadge } from "@/components/shared/PromptScoreBadge";
 import { AIModelBadge } from "@/components/shared/AIModelBadge";
-import type { MockNFT } from "@/lib/mock-data";
+import type { NFTItem } from "@/lib/types";
 import { formatNumber, formatStx } from "@/lib/utils";
 
 interface ExploreHeroProps {
-  featuredNFTs: MockNFT[];
+  featuredNFTs: NFTItem[];
   stats: { totalNfts: number; totalVolume: number; activeCreators: number };
 }
 

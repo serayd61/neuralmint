@@ -2,13 +2,13 @@
 
 import { NFTCard } from "@/components/shared/NFTCard";
 import { SkeletonCard } from "@/components/shared/SkeletonCard";
-import type { MockNFT } from "@/lib/mock-data";
+import type { NFTItem } from "@/lib/types";
 
 interface NFTGridProps {
-  nfts: MockNFT[];
+  nfts: NFTItem[];
   loading?: boolean;
-  onBuy: (nft: MockNFT) => void;
-  onSelect: (nft: MockNFT) => void;
+  onBuy: (nft: NFTItem) => void;
+  onSelect: (nft: NFTItem) => void;
   buyingId: string | null;
 }
 

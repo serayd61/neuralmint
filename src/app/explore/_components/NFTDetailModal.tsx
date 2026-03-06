@@ -7,13 +7,13 @@ import { PromptScoreBadge } from "@/components/shared/PromptScoreBadge";
 import { AIModelBadge } from "@/components/shared/AIModelBadge";
 import { PROMPT_TIER_CONFIG, getPromptTier } from "@/lib/prompt-utils";
 import { scorePrompt } from "@/lib/prompt-scoring";
-import type { MockNFT } from "@/lib/mock-data";
+import type { NFTItem } from "@/lib/types";
 import Link from "next/link";
 
 interface NFTDetailModalProps {
-  nft: MockNFT | null;
+  nft: NFTItem | null;
   onClose: () => void;
-  onBuy?: (nft: MockNFT) => void;
+  onBuy?: (nft: NFTItem) => void;
   buying?: boolean;
 }
 
