@@ -1,16 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, Wand2, ImagePlus, Zap, Coins, Loader2, Check, Wallet, Cloud, Server } from "lucide-react";
+import { Sparkles, Wand2, ImagePlus, Zap, Coins, Loader2, Check, Wallet, Cloud, Server, RotateCcw } from "lucide-react";
 import { useWalletStore } from "@/stores/wallet-store";
 import { AI_MODELS } from "@/lib/constants";
 
-type GenerationState = "idle" | "paying" | "generating" | "generated" | "uploading" | "minting" | "success";
+type GenerationState = "idle" | "generating" | "generated" | "paying" | "uploading" | "minting" | "success";
 
 interface ProviderAvailability {
   openai: boolean;
   openclaw: boolean;
   stableDiffusion: boolean;
+}
+
+interface SessionImage {
+  url: string;
+  prompt: string;
+  model: string;
+  timestamp: number;
 }
 
 export default function CreateClient() {
@@ -30,9 +37,9 @@ export default function CreateClient() {
   const [listingPrice, setListingPrice] = useState(85);
   const [royaltyBps, setRoyaltyBps] = useState(500); // 5%
   const [error, setError] = useState<string | null>(null);
-  const [txId, setTxId] = useState<string | null>(null);
   const [enhancing, setEnhancing] = useState(false);
   const [providers, setProviders] = useState<ProviderAvailability | null>(null);
+  const [sessionImages, setSessionImages] = useState<SessionImage[]>([]);
 
   // Fetch available providers on mount
   useEffect(() => {
@@ -42,6 +49,23 @@ export default function CreateClient() {
       .catch(() => setProviders({ openai: false, openclaw: false, stableDiffusion: false }));
   }, []);
 
+  // Load session history from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("neuralmint-session-images");
+      if (saved) setSessionImages(JSON.parse(saved));
+    } catch {}
+  }, []);
+
+  // Save session history to localStorage
+  const addSessionImage = (img: SessionImage) => {
+    setSessionImages((prev) => {
+      const updated = [img, ...prev].slice(0, 12);
+      try { localStorage.setItem("neuralmint-session-images", JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  };
+
   // Get selected model config
   const selectedModelConfig = AI_MODELS.find((m) => m.id === selectedModel);
   const generationFee = selectedModelConfig?.fee ?? 2.0;
@@ -49,7 +73,7 @@ export default function CreateClient() {
 
   // Check if selected provider is available
   const isProviderAvailable = (providerType: string) => {
-    if (!providers) return true; // Loading, assume available
+    if (!providers) return true;
     if (providerType === "openai") return providers.openai;
     if (providerType === "openclaw") return providers.openclaw || providers.stableDiffusion;
     return false;
@@ -75,33 +99,14 @@ export default function CreateClient() {
     }
   };
 
+  // Generate image for FREE — no payment required
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError("Please enter a prompt");
       return;
     }
 
-    if (!isConnected || !stxAddress) {
-      setError("Please connect your wallet to pay the generation fee");
-      return;
-    }
-
     setError(null);
-
-    // Step 1: Pay generation fee
-    setState("paying");
-    let paymentTxId: string;
-
-    try {
-      const { payGenerationFee } = await import("@/lib/fee-service");
-      paymentTxId = await payGenerationFee(generationFee);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Payment failed");
-      setState("idle");
-      return;
-    }
-
-    // Step 2: Generate image with payment proof
     setState("generating");
 
     try {
@@ -113,7 +118,6 @@ export default function CreateClient() {
           model: selectedModel,
           size,
           style,
-          txId: paymentTxId,
           provider: selectedProvider,
         }),
       });
@@ -127,12 +131,21 @@ export default function CreateClient() {
       setGeneratedImage(data.imageUrl);
       setPromptHash(data.promptHash);
       setState("generated");
+
+      // Add to session history
+      addSessionImage({
+        url: data.imageUrl,
+        prompt: prompt.slice(0, 100),
+        model: selectedModel,
+        timestamp: Date.now(),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
       setState("idle");
     }
   };
 
+  // Mint NFT — payment happens HERE
   const handleMint = async () => {
     if (!isConnected || !stxAddress) {
       setError("Please connect your wallet first");
@@ -144,11 +157,24 @@ export default function CreateClient() {
       return;
     }
 
-    setState("uploading");
+    // Step 1: Pay minting fee
+    setState("paying");
     setError(null);
 
+    let paymentTxId: string;
     try {
-      // Upload to IPFS
+      const { payGenerationFee } = await import("@/lib/fee-service");
+      paymentTxId = await payGenerationFee(generationFee);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Payment failed");
+      setState("generated");
+      return;
+    }
+
+    // Step 2: Upload to IPFS
+    setState("uploading");
+
+    try {
       const uploadResponse = await fetch("/api/v1/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -165,6 +191,7 @@ export default function CreateClient() {
             model: selectedModel,
             provider: selectedProvider,
             promptHash,
+            txId: paymentTxId,
           },
         }),
       });
@@ -175,9 +202,9 @@ export default function CreateClient() {
         throw new Error(uploadData.error || "Upload failed");
       }
 
+      // Step 3: Mint NFT
       setState("minting");
 
-      // Mint NFT
       const { mintNFT } = await import("@/lib/contracts");
       await mintNFT({
         recipient: stxAddress,
@@ -200,8 +227,6 @@ export default function CreateClient() {
     switch (state) {
       case "paying":
         return "Confirm Payment in Wallet...";
-      case "generating":
-        return "Generating...";
       case "uploading":
         return "Uploading to IPFS...";
       case "minting":
@@ -209,22 +234,12 @@ export default function CreateClient() {
       case "success":
         return "Minted Successfully!";
       default:
-        return "Mint NFT";
+        return `Mint NFT (${generationFee.toFixed(2)} STX)`;
     }
   };
 
-  const getGenerateButtonText = () => {
-    switch (state) {
-      case "paying":
-        return "Confirm Payment...";
-      case "generating":
-        return "Generating...";
-      default:
-        return `Generate (${generationFee.toFixed(2)} STX)`;
-    }
-  };
-
-  const isProcessing = ["paying", "generating", "uploading", "minting"].includes(state);
+  const isMinting = ["paying", "uploading", "minting"].includes(state);
+  const isGenerating = state === "generating";
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 pb-16 pt-6 sm:px-6 lg:px-8">
@@ -237,7 +252,7 @@ export default function CreateClient() {
         </div>
         {!isConnected && (
           <div className="rounded-lg border border-neon-orange/20 bg-neon-orange/10 px-3 py-1.5 text-xs text-neon-orange">
-            Connect wallet to generate &amp; mint
+            Connect wallet to mint (generation is free!)
           </div>
         )}
       </header>
@@ -333,33 +348,48 @@ export default function CreateClient() {
             </div>
             <button
               onClick={handleGenerate}
-              disabled={isProcessing || !isConnected}
+              disabled={isGenerating || isMinting}
               className="btn-primary mt-3 inline-flex w-full items-center justify-center gap-2 text-sm disabled:opacity-50"
             >
-              {state === "paying" ? (
-                <Wallet size={15} className="animate-pulse" />
-              ) : state === "generating" ? (
+              {isGenerating ? (
                 <Loader2 size={15} className="animate-spin" />
               ) : (
                 <Sparkles size={15} />
               )}
-              {getGenerateButtonText()}
+              {isGenerating ? "Generating..." : "Generate Preview (Free)"}
             </button>
           </div>
 
           <div className="neon-card p-4">
             <h2 className="mb-3 text-sm font-semibold text-text-primary">3) Session History</h2>
             <div className="grid grid-cols-4 gap-2">
-              {generatedImage ? (
-                <div className="relative overflow-hidden rounded-md">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={generatedImage} alt="Generated" className="h-16 w-full object-cover" />
-                </div>
-              ) : null}
-              {[...Array(generatedImage ? 3 : 4)].map((_, i) => (
-                <div key={i} className="shimmer h-16 rounded-md" />
-              ))}
+              {sessionImages.length > 0 ? (
+                sessionImages.slice(0, 4).map((img, i) => (
+                  <button
+                    key={img.timestamp}
+                    onClick={() => {
+                      setGeneratedImage(img.url);
+                      setState("generated");
+                    }}
+                    className="relative overflow-hidden rounded-md border border-white/10 hover:border-neon-cyan/40 transition-all group"
+                    title={img.prompt}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.url} alt={`Generated ${i + 1}`} className="h-16 w-full object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
+                      <RotateCcw size={14} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </button>
+                ))
+              ) : (
+                [...Array(4)].map((_, i) => (
+                  <div key={i} className="shimmer h-16 rounded-md" />
+                ))
+              )}
             </div>
+            {sessionImages.length === 0 && (
+              <p className="mt-2 text-center text-[11px] text-text-muted">Generate images to see them here</p>
+            )}
           </div>
         </div>
 
@@ -370,8 +400,8 @@ export default function CreateClient() {
               {generatedImage && (
                 <button
                   onClick={handleGenerate}
-                  disabled={isProcessing}
-                  className="rounded-md border border-white/10 bg-bg-card px-2.5 py-1 text-[11px] text-text-secondary disabled:opacity-50"
+                  disabled={isGenerating || isMinting}
+                  className="rounded-md border border-white/10 bg-bg-card px-2.5 py-1 text-[11px] text-text-secondary disabled:opacity-50 hover:border-neon-purple/30"
                 >
                   Regenerate
                 </button>
@@ -387,9 +417,10 @@ export default function CreateClient() {
                 />
               ) : (
                 <div className="flex h-72 items-center justify-center bg-bg-card text-text-muted">
-                  <span className="inline-flex items-center gap-2 text-sm">
-                    <ImagePlus size={16} />
-                    Generated image preview
+                  <span className="inline-flex flex-col items-center gap-2 text-sm">
+                    <ImagePlus size={24} />
+                    <span>Generate a free preview first</span>
+                    <span className="text-[11px] text-text-muted">No wallet needed to preview</span>
                   </span>
                 </div>
               )}
@@ -455,8 +486,15 @@ export default function CreateClient() {
             <div className="space-y-1.5 text-xs text-text-secondary">
               <p className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1">
+                  <Sparkles size={12} className="text-neon-green" />
+                  AI generation preview
+                </span>
+                <span className="font-mono text-neon-green">FREE</span>
+              </p>
+              <p className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1">
                   <Zap size={12} className="text-neon-purple" />
-                  AI generation ({selectedModelConfig?.name ?? "DALL-E 3"})
+                  Mint fee ({selectedModelConfig?.name ?? "DALL-E 3"})
                 </span>
                 <span className="font-mono">{generationFee.toFixed(2)} STX</span>
               </p>
@@ -468,23 +506,27 @@ export default function CreateClient() {
                 <span className="font-mono">0.01 STX</span>
               </p>
               <p className="mt-2 flex items-center justify-between border-t border-white/10 pt-2 text-text-primary">
-                <span>Total</span>
+                <span>Total to mint</span>
                 <span className="font-mono text-neon-cyan">{(generationFee + 0.01).toFixed(2)} STX</span>
               </p>
             </div>
             <button
               onClick={handleMint}
-              disabled={!isConnected || !generatedImage || isProcessing || state === "success"}
+              disabled={!isConnected || !generatedImage || isMinting || state === "success"}
               className={`mt-3 w-full rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
                 state === "success"
                   ? "bg-neon-green/20 text-neon-green"
                   : "btn-primary disabled:opacity-50"
               }`}
             >
-              {isProcessing && <Loader2 size={14} className="mr-2 inline animate-spin" />}
+              {isMinting && <Loader2 size={14} className="mr-2 inline animate-spin" />}
               {state === "success" && <Check size={14} className="mr-2 inline" />}
+              {state === "paying" && <Wallet size={14} className="mr-2 inline animate-pulse" />}
               {getButtonText()}
             </button>
+            {!generatedImage && (
+              <p className="mt-2 text-center text-[11px] text-text-muted">Generate a preview first, then mint</p>
+            )}
           </div>
         </div>
       </section>
